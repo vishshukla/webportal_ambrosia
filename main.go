@@ -37,18 +37,18 @@ type User struct {
 
 //CREATING THE TABLE FOR MYSQL
 
-// func createTable() {
-// 	stmt, err := db.Prepare("CREATE TABLE user (id INT NOT NULL AUTO_INCREMENT, user_type INT, prefix VARCHAR(10), first_name VARCHAR(40), middle_name VARCHAR(40), last_name VARCHAR(40), suffix VARCHAR(10) , email VARCHAR(60), password VARCHAR(200), ssn VARCHAR(9),phone VARCHAR(15), address VARCHAR(100), zipcode VARCHAR(8), city VARCHAR(20), state VARCHAR(2), country VARCHAR(100), login_attempt INT, active_status INT, PRIMARY KEY (id));")
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 	}
-// 	_, err = stmt.Exec()
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 	} else {
-// 		fmt.Println("Table is successfully created....")
-// 	}
-// }
+func createTable() {
+	stmt, err := db.Prepare("CREATE TABLE user (id INT NOT NULL AUTO_INCREMENT, user_type INT, prefix VARCHAR(10), first_name VARCHAR(40), middle_name VARCHAR(40), last_name VARCHAR(40), suffix VARCHAR(10) , email VARCHAR(60), password VARCHAR(200), ssn VARCHAR(9),phone VARCHAR(15), address VARCHAR(100), zipcode VARCHAR(8), city VARCHAR(20), state VARCHAR(2), country VARCHAR(100), login_attempt INT, active_status INT, PRIMARY KEY (id));")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Println("Table is successfully created....")
+	}
+}
 
 //GetAllUsers
 //@GET Request
@@ -342,5 +342,4 @@ func main() {
 	router.PUT("/api/signin", signIn)
 	router.PUT("/api/signout/:id", signOut)
 	router.Run(":8000")
-
 }
