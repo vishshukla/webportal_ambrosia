@@ -70,6 +70,49 @@ func getAllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
+func signOut(c *gin.Context) {
+	ID := c.Param("id")
+	db.QueryRow("UPDATE user SET active_status = 0 WHERE id=?;", ID)
+	// switch {
+	// case err != nil:
+	// 	log.Fatal(err)
+	// default:
+	// 	log.Printf("Signed out")
+	// }
+}
+
+func signIn(c *gin.Context) {
+
+	Email := c.PostForm("email")
+	Password := c.PostForm("password")
+	if passwordMatch(Email, Password) {
+		var ID int
+		db.QueryRow("SELECT id FROM user WHERE email= ?", Email).Scan(&ID) //finding id
+		db.QueryRow("UPDATE user SET active_status = 1 WHERE id=?;", ID)
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"message": fmt.Sprintf("Hmm... Something went wrong, please try again later."),
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"message": fmt.Sprintf("Welcome back."),
+			})
+		}
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Invalid credentials, please check and try again"),
+		})
+	}
+	// switch {
+	// case err != nil:
+	// 	log.Fatal(err)
+	// 	return false
+	// default:
+	// 	log.Printf("Signed in")
+	// 	return true
+	// }
+}
+
 //GetByID
 //@GET
 func getByID(c *gin.Context) {
@@ -296,6 +339,8 @@ func main() {
 	router.POST("/api/user", createUser)
 	router.DELETE("/api/user/:id", deleteUser)
 	router.PUT("/api/user/:id", updateUser)
+	router.PUT("/api/signin", signIn)
+	router.PUT("/api/signout/:id", signOut)
 	router.Run(":8000")
 
 }
