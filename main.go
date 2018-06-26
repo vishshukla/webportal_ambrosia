@@ -205,7 +205,7 @@ func createUser(c *gin.Context) {
 		panic(err)
 	}
 	//insert into database
-	stmt, err := db.Prepare("insert into user (user_type,prefix,first_name,middle_name,last_name,suffix,email,password,ssn,phone,address,zipcode,city,state,country,login_attempt,active_status) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,1);")
+	stmt, err := db.Prepare("insert into user (user_type,prefix,first_name,middle_name,last_name,suffix,email,password,ssn,phone,address,zipcode,city,state,country,login_attempt,active_status) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0);")
 	if err != nil {
 		log.Println("Error in the executing call")
 		fmt.Print(err.Error())
@@ -214,6 +214,10 @@ func createUser(c *gin.Context) {
 	_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, Email, string(HashedPassword), Ssn, Phone, Address, Zipcode, City, State, Country)
 	if err != nil {
 		fmt.Print(err.Error())
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Something went wrong, please check every field and try again"),
+		})
+		return
 	}
 
 	defer stmt.Close()
