@@ -323,15 +323,15 @@ func updateUser(c *gin.Context) {
 func main() {
 	// createTable() <-- already created table
 
-	if err != nil {
-		fmt.Print(err.Error())
-	}
-	defer db.Close()
+	// if err != nil {
+	// 	fmt.Print(err.Error())
+	// }
+	// defer db.Close()
 
-	err = db.Ping()
-	if err != nil {
-		fmt.Print(err.Error())
-	}
+	// err = db.Ping()
+	// if err != nil {
+	// 	fmt.Print(err.Error())
+	// }
 
 	router := gin.Default()
 	router.GET("/api/users", getAllUsers)
