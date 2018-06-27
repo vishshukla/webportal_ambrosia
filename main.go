@@ -345,5 +345,5 @@ func main() {
 	router.PUT("/api/user/:id", updateUser)
 	router.PUT("/api/signin", signIn)
 	router.PUT("/api/signout/:id", signOut)
-	router.Run(":8000")
+	router.Run(":8000") //Run server on port:8000
 }
