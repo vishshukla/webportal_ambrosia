@@ -6,13 +6,20 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	keys "./config"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var db, err = sql.Open("mysql", "testuser:password@tcp(127.0.0.1:3306)/test")
+
+//SecretKey is a global variable used to add 'password' to all the JWT
+var SecretKey = keys.Secret
 
 type User struct {
 	ID           int    `db:"id"`
@@ -81,37 +88,49 @@ func getAllUsers(c *gin.Context) {
 // 	// }
 // }
 
-// func signIn(c *gin.Context) {
+func login(c *gin.Context) {
 
-// 	Email := c.PostForm("email")
-// 	Password := c.PostForm("password")
-// 	if passwordMatch(Email, Password) {
-// 		var ID int
-// 		db.QueryRow("SELECT id FROM user WHERE email= ?", Email).Scan(&ID) //finding id
-// 		db.QueryRow("UPDATE user SET active_status = 1 WHERE id=?;", ID)
-// 		if err != nil {
-// 			c.JSON(http.StatusOK, gin.H{
-// 				"message": fmt.Sprintf("Hmm... Something went wrong, please try again later."),
-// 			})
-// 		} else {
-// 			c.JSON(http.StatusOK, gin.H{
-// 				"message": fmt.Sprintf("Welcome back."),
-// 			})
-// 		}
-// 	} else {
-// 		c.JSON(http.StatusOK, gin.H{
-// 			"message": fmt.Sprintf("Invalid credentials, please check and try again"),
-// 		})
-// 	}
-// 	// switch {
-// 	// case err != nil:
-// 	// 	log.Fatal(err)
-// 	// 	return false
-// 	// default:
-// 	// 	log.Printf("Signed in")
-// 	// 	return true
-/// 	// }
-// }
+	Email := c.PostForm("email")
+	Password := c.PostForm("password")
+	var ID int
+	err := db.QueryRow("SELECT id FROM user WHERE email= ?", Email).Scan(&ID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("No user with that email was found."),
+		})
+		return
+	}
+	if passwordMatch(Email, Password) {
+
+		//creating a token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"id":  ID,
+			"exp": time.Now().Add(time.Hour * 72).Unix(),
+		})
+
+		tokenString, err := token.SignedString(SecretKey)
+		fmt.Println(tokenString, err)
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"token":   "Bearer " + tokenString,
+		})
+		return
+		//}
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": fmt.Sprintf("Invalid credentials, please check and try again"),
+		})
+	}
+	// switch {
+	// case err != nil:
+	// 	log.Fatal(err)
+	// 	return false
+	// default:
+	// 	log.Printf("Signed in")
+	// 	return true
+	// }
+}
 
 //GetByID
 //@GET
@@ -186,7 +205,7 @@ func createUser(c *gin.Context) {
 	State := c.PostForm("state")
 	Country := c.PostForm("country")
 
-	if Email == "" || Password == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" {
+	if Email == "" || Password == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" || Phone == "" {
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("Please fill all mandatory fields"),
 		})
@@ -336,14 +355,20 @@ func main() {
 	// if err != nil {
 	// 	fmt.Print(err.Error())
 	// }
-
+	// r := mux.NewRouter()
 	router := gin.Default()
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Hello, this is the home page"),
+		})
+	})
 	router.GET("/api/users", getAllUsers)
 	router.GET("api/user/:id", getByID)
 	router.POST("/api/user", createUser)
 	router.DELETE("/api/user/:id", deleteUser)
 	router.PUT("/api/user/:id", updateUser)
-	// router.PUT("/api/signin", signIn)
+	router.PUT("/api/users/login", login)
 	// router.PUT("/api/signout/:id", signOut)
 	router.Run(":8000") //Run server on port:8000
+
 }
