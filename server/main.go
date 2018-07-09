@@ -2,16 +2,19 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
-	keys "./config"
+	simplejson "github.com/bitly/go-simplejson"
+	"github.com/gorilla/mux"
+
+	keys "github.com/vishshukla/learning_go/server/config"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
+	"github.com/dgrijalva/jwt-go/request"
 	_ "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -59,7 +62,7 @@ func createTable() {
 
 //GetAllUsers
 //@GET Request
-func getAllUsers(c *gin.Context) {
+func getAllUsers(w http.ResponseWriter, r *http.Request) {
 	var (
 		user  User
 		users []User
@@ -74,7 +77,9 @@ func getAllUsers(c *gin.Context) {
 		users = append(users, user)
 	}
 	defer rows.Close()
-	c.JSON(http.StatusOK, users)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+
 }
 
 // func signOut(c *gin.Context) {
@@ -88,16 +93,18 @@ func getAllUsers(c *gin.Context) {
 // 	// }
 // }
 
-func login(c *gin.Context) {
+func login(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "applications/json")
 
-	Email := c.PostForm("email")
-	Password := c.PostForm("password")
+	Email := r.FormValue("email")
+	Password := r.FormValue("password")
+	json := simplejson.New()
 	var ID int
 	err := db.QueryRow("SELECT id FROM user WHERE email= ?", Email).Scan(&ID)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("No user with that email was found."),
-		})
+		json.Set("message", "No user with that email was found.")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
 		return
 	}
 	if passwordMatch(Email, Password) {
@@ -108,19 +115,18 @@ func login(c *gin.Context) {
 			"exp": time.Now().Add(time.Hour * 72).Unix(),
 		})
 
-		tokenString, err := token.SignedString(SecretKey)
-		fmt.Println(tokenString, err)
-		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"token":   "Bearer " + tokenString,
-		})
+		tokenString, _ := token.SignedString(SecretKey)
+		json.Set("success", true)
+		json.Set("token", "Bearer "+tokenString)
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
 		return
 		//}
 	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"success": false,
-			"message": fmt.Sprintf("Invalid credentials, please check and try again"),
-		})
+		json.Set("success", false)
+		json.Set("message", "Invalid credentials, please check and try again.")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
 	}
 	// switch {
 	// case err != nil:
@@ -134,17 +140,17 @@ func login(c *gin.Context) {
 
 //GetByID
 //@GET
-func getByID(c *gin.Context) {
+func getByID(w http.ResponseWriter, r *http.Request) {
 	var user User
-	id := c.Param("id")
-	row := db.QueryRow("SELECT id, user_type, prefix, first_name, middle_name, last_name, suffix, email, phone, address, zipcode, city, state, country, active_status FROM USER WHERE id = ?", id)
+	params := mux.Vars(r)
+	id := params["id"]
+	row := db.QueryRow("SELECT id, user_type, prefix, first_name, middle_name, last_name, suffix, email, phone, address, zipcode, city, state, country, active_status, ssn FROM USER WHERE id = ?", id)
 
-	err := row.Scan(&user.ID, &user.UserType, &user.Prefix, &user.FirstName, &user.MiddleName, &user.LastName, &user.Suffix, &user.Email, &user.Phone, &user.Address, &user.Zipcode, &user.City, &user.State, &user.Country)
-	if err != nil {
-		c.JSON(http.StatusOK, nil)
-	} else {
-		c.JSON(http.StatusOK, user)
-	}
+	row.Scan(&user.ID, &user.UserType, &user.Prefix, &user.FirstName, &user.MiddleName, &user.LastName, &user.Suffix, &user.Email, &user.Phone, &user.Address, &user.Zipcode, &user.City, &user.State, &user.Country, &user.ActiveStatus, &user.Ssn)
+
+	w.Header().Set("Content-Type", "application/json")
+	log.Printf("Requesting info from user id: " + id)
+	json.NewEncoder(w).Encode(user)
 }
 
 //PasswordMatch
@@ -188,34 +194,44 @@ func isEmailOrPhone(email, phone string) bool {
 
 //CreateUser
 //@POST
-func createUser(c *gin.Context) {
-	UserType := c.PostForm("user_type")
-	Prefix := c.PostForm("prefix")
-	FirstName := c.PostForm("first_name")
-	MiddleName := c.PostForm("middle_name")
-	LastName := c.PostForm("last_name")
-	Suffix := c.PostForm("suffix")
-	Email := c.PostForm("email")
-	Password := c.PostForm("password")
-	Ssn := c.PostForm("ssn")
-	Phone := c.PostForm("phone")
-	Address := c.PostForm("address")
-	Zipcode := c.PostForm("zipcode")
-	City := c.PostForm("city")
-	State := c.PostForm("state")
-	Country := c.PostForm("country")
+//TODO- FIX r.FormValue
+func createUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	UserType := r.FormValue("user_type")
+	Prefix := r.FormValue("prefix")
+	FirstName := r.FormValue("first_name")
+	MiddleName := r.FormValue("middle_name")
+	LastName := r.FormValue("last_name")
+	Suffix := r.FormValue("suffix")
+	Email := r.FormValue("email")
+	Password := r.FormValue("password")
+	Ssn := r.FormValue("ssn")
+	Phone := r.FormValue("phone")
+	Address := r.FormValue("address")
+	Zipcode := r.FormValue("zipcode")
+	City := r.FormValue("city")
+	State := r.FormValue("state")
+	Country := r.FormValue("country")
+	w.Header().Set("Content-Type", "application/json")
+	json := simplejson.New()
 
 	if Email == "" || Password == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" || Phone == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Please fill all mandatory fields"),
-		})
+		json.Set("message", "Please fill all mandatory fields...")
+		payload, err := json.MarshalJSON()
+		if err != nil {
+			w.Write([]byte("Something went wrong..."))
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(payload)
+		}
+
 		return
 	}
 	//If email already exists
 	if isEmailOrPhone(Email, Phone) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Email or Phone is already in use"),
-		})
+		json.Set("message", "An account with this email or phone already exists...")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
 		return
 	}
 
@@ -224,7 +240,7 @@ func createUser(c *gin.Context) {
 		panic(err)
 	}
 	//insert into database
-	stmt, err := db.Prepare("insert into user (user_type,prefix,first_name,middle_name,last_name,suffix,email,password,ssn,phone,address,zipcode,city,state,country,login_attempt,active_status) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,0);")
+	stmt, err := db.Prepare("insert into user (user_type,prefix,first_name,middle_name,last_name,suffix,email,password,ssn,phone,address,zipcode,city,state,country,login_attempt,active_status) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,1);")
 	if err != nil {
 		log.Println("Error in the executing call")
 		fmt.Print(err.Error())
@@ -233,26 +249,33 @@ func createUser(c *gin.Context) {
 	_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, Email, string(HashedPassword), Ssn, Phone, Address, Zipcode, City, State, Country)
 	if err != nil {
 		fmt.Print(err.Error())
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Something went wrong, please check every field and try again"),
-		})
+		json.Set("message", "Something went wrong, please check every field and try again")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
+		// c.JSON(http.StatusOK, gin.H{
+		// 	"message": fmt.Sprintf("Something went wrong, please check every field and try again"),
+		// })
 		return
 	}
 
 	defer stmt.Close()
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Successfully created"),
-	})
+	json.Set("message", "Successfully created")
+	payload, _ := json.MarshalJSON()
+	w.Write(payload)
 }
 
 //DeleteUser
 //@DELETE
-func deleteUser(c *gin.Context) {
-	ID := c.Param("id")
+func deleteUser(w http.ResponseWriter, r *http.Request) {
+	param := mux.Vars(r)
+	json := simplejson.New()
+	ID := param["id"]
+	w.Header().Set("Content-Type", "application/json")
 	stmt, err := db.Prepare("delete from user where id= ?;")
 
 	if err != nil {
+		json.Set("message", "Something went wrong...")
 		fmt.Print(err.Error())
 	}
 
@@ -265,42 +288,46 @@ func deleteUser(c *gin.Context) {
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Successfully deleted user with ID: %s", ID),
-	})
+	json.Set("message", "Successfully deleted")
+	payload, _ := json.MarshalJSON()
+	w.Write(payload)
 }
 
-func updateUser(c *gin.Context) {
-	ID, err := strconv.Atoi(c.Param("id"))
-	UserType := c.PostForm("user_type")
-	Prefix := c.PostForm("prefix")
-	FirstName := c.PostForm("first_name")
-	MiddleName := c.PostForm("middle_name")
-	NewPassword := c.PostForm("new_password")
-	OldPassword := c.PostForm("old_password")
-	LastName := c.PostForm("last_name")
-	Suffix := c.PostForm("suffix")
-	Email := c.PostForm("email")
-	Ssn := c.PostForm("ssn")
-	Phone := c.PostForm("phone")
-	Address := c.PostForm("address")
-	Zipcode := c.PostForm("zipcode")
-	City := c.PostForm("city")
-	State := c.PostForm("state")
-	Country := c.PostForm("country")
+//UpdateUSER
+//@PUT
+//TODO: Need to add verification to new email before setting new email
+func updateUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ID := mux.Vars(r)["id"]
+	UserType := r.FormValue("user_type")
+	Prefix := r.FormValue("prefix")
+	FirstName := r.FormValue("first_name")
+	MiddleName := r.FormValue("middle_name")
+	NewPassword := r.FormValue("new_password")
+	OldPassword := r.FormValue("old_password")
+	LastName := r.FormValue("last_name")
+	Suffix := r.FormValue("suffix")
+	Email := r.FormValue("email")
+	Ssn := r.FormValue("ssn")
+	Phone := r.FormValue("phone")
+	Address := r.FormValue("address")
+	Zipcode := r.FormValue("zipcode")
+	City := r.FormValue("city")
+	State := r.FormValue("state")
+	Country := r.FormValue("country")
+	json := simplejson.New()
 
-	if Email == "" || OldPassword == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Please fill all mandatory fields"),
-		})
+	if Email == "" || OldPassword == "" || NewPassword == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" {
+		json.Set("message", "Please fill in all the required fields")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
 		return
 	}
 
 	if !passwordMatch(Email, OldPassword) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Old password does not match"),
-		})
+		json.Set("message", "Old password doesn't match")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
 		return
 	}
 
@@ -313,16 +340,9 @@ func updateUser(c *gin.Context) {
 
 	//To check if the user actually inserted a different password
 	if passwordMatch(Email, NewPassword) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Please choose a password that you haven't used before"),
-		})
-		return
-	}
-
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Please use a different password you aren't currently using"),
-		})
+		json.Set("message", "Choose a password you haven't used before!")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
 		return
 	}
 
@@ -338,9 +358,31 @@ func updateUser(c *gin.Context) {
 
 	defer stmt.Close()
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Successfully updated " + FirstName + " " + LastName),
-	})
+	json.Set("message", "Successfully updated "+FirstName+" "+LastName)
+	payload, _ := json.MarshalJSON()
+	w.Write(payload)
+}
+
+//ValidateTokenMiddleware TODO: For auth when accessing private routes
+func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+
+	token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
+		func(token *jwt.Token) (interface{}, error) {
+			return SecretKey, nil
+		})
+
+	if err == nil {
+		if token.Valid {
+			next(w, r)
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+			fmt.Fprint(w, "Token is not valid")
+		}
+	} else {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprint(w, "Unauthorized access to this resource")
+	}
+
 }
 
 func main() {
@@ -355,20 +397,37 @@ func main() {
 	// if err != nil {
 	// 	fmt.Print(err.Error())
 	// }
-	// r := mux.NewRouter()
-	router := gin.Default()
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("Hello, this is the home page"),
-		})
-	})
-	router.GET("/api/users", getAllUsers)
-	router.GET("api/user/:id", getByID)
-	router.POST("/api/user", createUser)
-	router.DELETE("/api/user/:id", deleteUser)
-	router.PUT("/api/user/:id", updateUser)
-	router.PUT("/api/users/login", login)
+	r := mux.NewRouter()
+
+	// router.Handle("/resource", negroni.New(
+	// 	negroni.HandlerFunc(ValidateTokenMiddleware),
+	// ))
+	r.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("In test page"))
+	}).Methods("GET")
+	//GETUSERS
+	//@PUBLIC
+	r.HandleFunc("/api/users", getAllUsers).Methods("GET")
+	// router.GET("/api/users", getAllUsers)
+	//GETBYID
+	//@PRIVATE - LOGGED
+
+	r.HandleFunc("/api/user/{id}", getByID).Methods("GET")
+	// router.GET("api/user/:id", getByID)
+
+	r.HandleFunc("/api/user", createUser).Methods("POST")
+	// router.POST("/api/user", createUser)
+
+	r.HandleFunc("/api/user/{id}", deleteUser).Methods("DELETE")
+	// router.DELETE("/api/user/:id", deleteUser)
+
+	r.HandleFunc("/api/user/{id}", updateUser).Methods("PUT")
+	// router.PUT("/api/user/:id", updateUser)
+
+	r.HandleFunc("/api/users/login", login).Methods("PUT")
+	// router.PUT("/api/users/login", login)
+
 	// router.PUT("/api/signout/:id", signOut)
-	router.Run(":8000") //Run server on port:8000
+	log.Fatal(http.ListenAndServe(":8000", r))
 
 }
