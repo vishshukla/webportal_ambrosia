@@ -366,6 +366,8 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 //ValidateTokenMiddleware still working on this..
 func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	w.Header().Set("Content-Type", "application/json")
+	json := simplejson.New()
+
 	rawToken := r.Header.Get("Authorization")
 	// token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
 	// 	func(token *jwt.Token) (interface{}, error) {
@@ -389,18 +391,22 @@ func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.H
 			if idPassed == idFromClaims {
 				next(w, r)
 			} else { //trying to access someone else's info
-
+				json.Set("message", "Unauthorized access to this resource")
+				payload, _ := json.MarshalJSON()
 				w.WriteHeader(http.StatusUnauthorized)
-				fmt.Fprint(w, "Unauthorized access to this resource")
+				w.Write(payload)
 			}
 		} else {
+			json.Set("message", "Unauthorized access to this resource")
+			payload, _ := json.MarshalJSON()
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Unauthorized access to this resource")
+			w.Write(payload)
 		}
 	} else {
-		fmt.Printf("Token is not right...")
+		json.Set("message", "Unauthorized access to this resource")
+		payload, _ := json.MarshalJSON()
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprint(w, "Unauthorized access to this resource")
+		w.Write(payload)
 	}
 
 }
