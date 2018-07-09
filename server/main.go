@@ -10,11 +10,11 @@ import (
 
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/gorilla/mux"
+	"github.com/urfave/negroni"
 
 	keys "github.com/vishshukla/learning_go/server/config"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/dgrijalva/jwt-go/request"
 	_ "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -111,10 +111,11 @@ func login(w http.ResponseWriter, r *http.Request) {
 	if passwordMatch(Email, Password) {
 
 		//creating a token
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		token := jwt.New(jwt.SigningMethodHS256)
+		token.Claims = jwt.MapClaims{
 			"id":  ID,
 			"exp": time.Now().Add(time.Hour * 72).Unix(),
-		})
+		}
 
 		tokenString, _ := token.SignedString(SecretKey)
 		json.Set("success", true)
@@ -362,22 +363,42 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	w.Write(payload)
 }
 
-//ValidateTokenMiddleware TODO: For auth when accessing private routes
+//ValidateTokenMiddleware still working on this..
 func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	w.Header().Set("Content-Type", "application/json")
+	rawToken := r.Header.Get("Authorization")
+	// token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
+	// 	func(token *jwt.Token) (interface{}, error) {
+	// 		return SecretKey, nil
+	// 	})
+	token, err := jwt.Parse(rawToken, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
 
-	token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
-		func(token *jwt.Token) (interface{}, error) {
-			return SecretKey, nil
-		})
-
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		return SecretKey, nil
+	})
 	if err == nil {
-		if token.Valid {
-			next(w, r)
+		// idPassed := interface{}(mux.Vars(r)["id"])
+		// fmt.Printf(idPassed.(string))
+		idPassed := mux.Vars(r)["id"]
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			idFromClaims := fmt.Sprint(claims["id"])
+			if idPassed == idFromClaims {
+				next(w, r)
+			} else { //trying to access someone else's info
+
+				w.WriteHeader(http.StatusUnauthorized)
+				fmt.Fprint(w, "Unauthorized access to this resource")
+			}
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Token is not valid")
+			fmt.Fprint(w, "Unauthorized access to this resource")
 		}
 	} else {
+		fmt.Printf("Token is not right...")
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, "Unauthorized access to this resource")
 	}
@@ -397,6 +418,14 @@ func main() {
 	// 	fmt.Print(err.Error())
 	// }
 	r := mux.NewRouter()
+	api := mux.NewRouter()
+	// admin := mux.NewRouter()
+
+	//Put protection on all user routes
+	r.PathPrefix("/api/user/{id}").Handler(negroni.New(
+		negroni.HandlerFunc(ValidateTokenMiddleware),
+		negroni.Wrap(api),
+	))
 
 	// router.Handle("/resource", negroni.New(
 	// 	negroni.HandlerFunc(ValidateTokenMiddleware),
@@ -405,25 +434,33 @@ func main() {
 		w.Write([]byte("In test page"))
 	}).Methods("GET")
 	//GETUSERS
-	//@PUBLIC
-	r.HandleFunc("/api/users", getAllUsers).Methods("GET")
+	//@ADMIN ONLY
+	// r.HandleFunc("/api/users", getAllUsers).Methods("GET")
 	// router.GET("/api/users", getAllUsers)
 	//GETBYID
 	//@PRIVATE - LOGGED
 
-	r.HandleFunc("/api/user/{id}", getByID).Methods("GET")
+	//@PRIVATE
+	// r.Handle("/api/user/{id}", negroni.New(
+	// 	negroni.HandlerFunc(ValidateTokenMiddleware),
+	// 	negroni.Wrap(http.HandlerFunc(getByID)),
+	// )).Methods("GET")
+	api.HandleFunc("/api/user/{id}", getByID).Methods("GET")
 	// router.GET("api/user/:id", getByID)
 
-	r.HandleFunc("/api/user", createUser).Methods("POST")
+	//@PUBLIC
+	r.HandleFunc("/create", createUser).Methods("POST")
 	// router.POST("/api/user", createUser)
 
-	r.HandleFunc("/api/user/{id}", deleteUser).Methods("DELETE")
+	//@PRIVATE
+	api.HandleFunc("/api/user/{id}", deleteUser).Methods("DELETE")
+	// r.HandleFunc("/api/user/{id}", deleteUser).Methods("DELETE")
 	// router.DELETE("/api/user/:id", deleteUser)
 
-	r.HandleFunc("/api/user/{id}", updateUser).Methods("PUT")
+	api.HandleFunc("/api/user/{id}", updateUser).Methods("PUT")
 	// router.PUT("/api/user/:id", updateUser)
 
-	r.HandleFunc("/api/users/login", login).Methods("PUT")
+	r.HandleFunc("/login", login).Methods("PUT")
 	// router.PUT("/api/users/login", login)
 
 	// router.PUT("/api/signout/:id", signOut)
