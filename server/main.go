@@ -441,18 +441,13 @@ func main() {
 	}).Methods("GET")
 	//GETUSERS
 	//@ADMIN ONLY
-	// r.HandleFunc("/api/users", getAllUsers).Methods("GET")
+	r.HandleFunc("/api/users", getAllUsers).Methods("GET")
 	// router.GET("/api/users", getAllUsers)
 	//GETBYID
 	//@PRIVATE - LOGGED
 
 	//@PRIVATE
-	// r.Handle("/api/user/{id}", negroni.New(
-	// 	negroni.HandlerFunc(ValidateTokenMiddleware),
-	// 	negroni.Wrap(http.HandlerFunc(getByID)),
-	// )).Methods("GET")
 	api.HandleFunc("/api/user/{id}", getByID).Methods("GET")
-	// router.GET("api/user/:id", getByID)
 
 	//@PUBLIC
 	r.HandleFunc("/create", createUser).Methods("POST")
