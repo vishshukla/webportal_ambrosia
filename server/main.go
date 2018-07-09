@@ -24,6 +24,7 @@ var db, err = sql.Open("mysql", "testuser:password@tcp(127.0.0.1:3306)/test")
 //SecretKey is a global variable used to add 'password' to all the JWT
 var SecretKey = keys.Secret
 
+//User has all of the elements for a basic user in this web app.
 type User struct {
 	ID           int    `db:"id"`
 	UserType     int    `db:"user_type" form:"user_type"`
@@ -121,13 +122,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
-		//}
-	} else {
-		json.Set("success", false)
-		json.Set("message", "Invalid credentials, please check and try again.")
-		payload, _ := json.MarshalJSON()
-		w.Write(payload)
 	}
+	//else
+	json.Set("success", false)
+	json.Set("message", "Invalid credentials, please check and try again.")
+	payload, _ := json.MarshalJSON()
+	w.Write(payload)
 	// switch {
 	// case err != nil:
 	// 	log.Fatal(err)
@@ -167,9 +167,8 @@ func passwordMatch(email string, pwd string) bool {
 	err = bcrypt.CompareHashAndPassword(passwordInByte, inputPassword)
 	if err == nil {
 		return true //passwords match
-	} else {
-		return false //incorrect password
 	}
+	return false //incorrect password
 
 }
 
