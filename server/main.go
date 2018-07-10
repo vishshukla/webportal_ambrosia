@@ -27,21 +27,21 @@ var SecretKey = keys.Secret
 //User has all of the elements for a basic user in this web app.
 type User struct {
 	ID           int    `db:"id"`
-	UserType     int    `db:"user_type" form:"user_type"`
+	UserType     int    `db:"user_type" form:"user_type" validate:"required"`
 	Prefix       string `db:"prefix" form:"prefix"`
-	FirstName    string `db:"first_name" form:"first_name"`
+	FirstName    string `db:"first_name" form:"first_name" validate:"required"`
 	MiddleName   string `db:"middle_name" form:"middle_name"`
-	LastName     string `db:"last_name" form:"last_name"`
+	LastName     string `db:"last_name" form:"last_name" validate:"required"`
 	Suffix       string `db:"suffix" form:"suffix"`
-	Email        string `db:"email" form:"email"`
-	Password     string `db:"password" form:"password"`
+	Email        string `db:"email" form:"email" validate:"required,email"`
+	Password     string `db:"password" form:"password" validate:"required,password"`
 	Ssn          string `db:"ssn" form:"ssn"`
-	Phone        string `db:"phone" form:"phone"`
-	Address      string `db:"address" form:"address"`
+	Phone        string `db:"phone" form:"phone" validate:"required"`
+	Address      string `db:"address" form:"address" validate:"required"`
 	Zipcode      string `db:"zipcode" form:"zipcode"`
-	City         string `db:"city" form:"city"`
+	City         string `db:"city" form:"city" `
 	State        string `db:"state" form:"state"`
-	Country      string `db:"country" form:"country"`
+	Country      string `db:"country" form:"country" validate:"required"`
 	LoginAttempt int    `db:"login_attempt" form:"login_attempt"`
 	ActiveStatus int    `db:"active_status" form:"active_status"`
 }
@@ -119,7 +119,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 		tokenString, _ := token.SignedString(SecretKey)
 		json.Set("success", true)
-		json.Set("token", "Bearer "+tokenString)
+		json.Set("token", tokenString)
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
@@ -221,6 +221,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	Suffix := r.FormValue("suffix")
 	Email := r.FormValue("email")
 	Password := r.FormValue("password")
+	ConfirmPassword := r.FormValue("confirm_password")
 	Ssn := r.FormValue("ssn")
 	Phone := r.FormValue("phone")
 	Address := r.FormValue("address")
@@ -228,6 +229,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	City := r.FormValue("city")
 	State := r.FormValue("state")
 	Country := r.FormValue("country")
+
 	w.Header().Set("Content-Type", "application/json")
 	json := simplejson.New()
 
@@ -246,6 +248,19 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	//If email already exists
 	if isEmailOrPhone(Email, Phone) {
 		json.Set("message", "An account with this email or phone already exists...")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
+		return
+	}
+	if len(Password) < 6 || len(Password) > 20 {
+		json.Set("message", "Password must be between 6-20 Characters")
+		payload, _ := json.MarshalJSON()
+		w.Write(payload)
+		return
+	}
+
+	if Password != ConfirmPassword {
+		json.Set("message", "Passwords do not match")
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
@@ -334,7 +349,7 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	FirstName := r.FormValue("first_name")
 	MiddleName := r.FormValue("middle_name")
 	NewPassword := r.FormValue("new_password")
-	OldPassword := r.FormValue("old_password")
+	CurrentPassword := r.FormValue("current_password")
 	LastName := r.FormValue("last_name")
 	Suffix := r.FormValue("suffix")
 	Email := r.FormValue("email")
@@ -346,47 +361,66 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	State := r.FormValue("state")
 	Country := r.FormValue("country")
 	json := simplejson.New()
+	var oldEmail string
+	db.QueryRow("SELECT email FROM user WHERE ID=?", ID).Scan(&oldEmail)
 
-	if Email == "" || OldPassword == "" || NewPassword == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" {
+	if Email == "" || CurrentPassword == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" {
 		json.Set("message", "Please fill in all the required fields")
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
 	}
 
-	if !passwordMatch(Email, OldPassword) {
-		json.Set("message", "Old password doesn't match")
+	if !passwordMatch(oldEmail, CurrentPassword) {
+		json.Set("message", "Current password doesn't match")
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
 	}
+	//if they are changing their password
+	if NewPassword != "" {
+		var HashedPassword []byte
+		if len(NewPassword) < 6 || len(NewPassword) > 20 {
+			json.Set("message", "Password must be between 6-20 characters")
+			return
+		}
 
-	var HashedPassword []byte
+		HashedPassword, err = bcrypt.GenerateFromPassword([]byte(NewPassword), bcrypt.DefaultCost)
+		if err != nil {
+			panic(err)
+		}
 
-	HashedPassword, err = bcrypt.GenerateFromPassword([]byte(NewPassword), bcrypt.DefaultCost)
-	if err != nil {
-		panic(err)
+		//To check if the user actually inserted a different password
+		if passwordMatch(oldEmail, NewPassword) {
+			json.Set("message", "Choose a password you haven't used before!")
+			payload, _ := json.MarshalJSON()
+			w.Write(payload)
+			return
+		}
+		stmt, err := db.Prepare("update user set user_type=?, prefix=?,first_name=?,middle_name=?,last_name=?,suffix=?, password=?,email=?,ssn=?,phone=?,address=?,zipcode=?,city=?,state=?,country=? WHERE id=?; ")
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+
+		_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, string(HashedPassword), Email, Ssn, Phone, Address, Zipcode, City, State, Country, ID)
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+
+		defer stmt.Close()
+	} else {
+		stmt, err := db.Prepare("update user set user_type=?, prefix=?,first_name=?,middle_name=?,last_name=?,suffix=?,email=?,ssn=?,phone=?,address=?,zipcode=?,city=?,state=?,country=? WHERE id=?; ")
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+
+		_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, Email, Ssn, Phone, Address, Zipcode, City, State, Country, ID)
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+
+		defer stmt.Close()
 	}
-
-	//To check if the user actually inserted a different password
-	if passwordMatch(Email, NewPassword) {
-		json.Set("message", "Choose a password you haven't used before!")
-		payload, _ := json.MarshalJSON()
-		w.Write(payload)
-		return
-	}
-
-	stmt, err := db.Prepare("update user set user_type=?, prefix=?,first_name=?,middle_name=?,last_name=?,suffix=?, password=?,ssn=?,phone=?,address=?,zipcode=?,city=?,state=?,country=? WHERE id=?; ")
-	if err != nil {
-		fmt.Print(err.Error())
-	}
-
-	_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, string(HashedPassword), Ssn, Phone, Address, Zipcode, City, State, Country, ID)
-	if err != nil {
-		fmt.Print(err.Error())
-	}
-
-	defer stmt.Close()
 
 	json.Set("message", "Successfully updated "+FirstName+" "+LastName)
 	payload, _ := json.MarshalJSON()
@@ -481,7 +515,7 @@ func main() {
 	api.HandleFunc("/api/user", getByID).Methods("GET")
 
 	//@PUBLIC
-	r.HandleFunc("/create", createUser).Methods("POST")
+	r.HandleFunc("/register", createUser).Methods("POST")
 	// router.POST("/api/user", createUser)
 
 	//@PRIVATE
