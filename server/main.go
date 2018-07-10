@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
@@ -208,11 +209,52 @@ func isEmailOrPhone(email, phone string) bool {
 	}
 }
 
+//TESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTING
+// formatRequest generates ascii representation of a request
+func formatRequest(r *http.Request) string {
+	// Create return string
+	var request []string
+	// Add the request string
+	url := fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto)
+	request = append(request, url)
+	// Add the host
+	request = append(request, fmt.Sprintf("Host: %v", r.Host))
+	// Loop through headers
+	for name, headers := range r.Header {
+		name = strings.ToLower(name)
+		for _, h := range headers {
+			request = append(request, fmt.Sprintf("%v: %v", name, h))
+		}
+	}
+
+	// If this is a POST, add post data
+	if r.Method == "POST" {
+		r.ParseForm()
+		request = append(request, "\n")
+		request = append(request, r.Form.Encode())
+	}
+	// Return the request as a string
+	return strings.Join(request, "\n")
+}
+
+//TESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTING
+
 //CreateUser
 //@POST
 //TODO- FIX r.FormValue
 func createUser(w http.ResponseWriter, r *http.Request) {
+
+	formatRequest(r)
+
 	w.Header().Set("Content-Type", "application/json")
+	// if err != nil {
+	// 	w.WriteHeader(http.StatusBadGateway)
+	// 	return
+	// }
+	// for key, values := range r.PostForm {
+	// 	fmt.Printf(key, values)
+	// }
+	// logic part of log in
 	UserType := r.FormValue("user_type")
 	Prefix := r.FormValue("prefix")
 	FirstName := r.FormValue("first_name")
@@ -233,7 +275,10 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json := simplejson.New()
 
-	if Email == "" || Password == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" || Phone == "" {
+	if Email == "" || Password == "" || ConfirmPassword == "" || FirstName == "" || LastName == "" {
+		if Email == "" {
+			json.Set("Email", "is blank")
+		}
 		json.Set("message", "Please fill all mandatory fields...")
 		payload, err := json.MarshalJSON()
 		if err != nil {
@@ -242,7 +287,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(payload)
 		}
-
 		return
 	}
 	//If email already exists
@@ -461,13 +505,16 @@ func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.H
 	// })
 	json := simplejson.New()
 	token, err := parseToken(w, r)
+	// if fmt.Sprint(token.Claims.(jwt.MapClaims)["id"]) {
+
+	// }
 	if err == nil && token.Valid {
 		// idPassed := interface{}(mux.Vars(r)["id"])
 		// fmt.Printf(idPassed.(string))
 		// idFromClaims := fmt.Sprint(claims["id"]) claims, ok := token.Claims.(jwt.MapClaims)
 		next(w, r)
 	} else {
-		json.Set("message", "Unauthorized access to this resource")
+		json.Set("message", "Unauthorized access to this resource, please log in again.")
 		payload, _ := json.MarshalJSON()
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(payload)
