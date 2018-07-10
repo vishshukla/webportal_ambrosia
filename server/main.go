@@ -139,19 +139,35 @@ func login(w http.ResponseWriter, r *http.Request) {
 	// }
 }
 
+type Message struct {
+	Name string
+	Body string
+}
+
 //GetByID
 //@GET
 func getByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// json := simplejson.New()
 	var user User
-	params := mux.Vars(r)
-	id := params["id"]
+	token, err := parseToken(w, r)
+	id := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"])
+	if err != nil {
+		m := Message{"Message", "Unauthorized Link"}
+		payload, _ := json.Marshal(m)
+		w.Write(payload)
+		return
+	}
 	row := db.QueryRow("SELECT id, user_type, prefix, first_name, middle_name, last_name, suffix, email, phone, address, zipcode, city, state, country, active_status, ssn FROM USER WHERE id = ?", id)
 
 	row.Scan(&user.ID, &user.UserType, &user.Prefix, &user.FirstName, &user.MiddleName, &user.LastName, &user.Suffix, &user.Email, &user.Phone, &user.Address, &user.Zipcode, &user.City, &user.State, &user.Country, &user.ActiveStatus, &user.Ssn)
 
 	w.Header().Set("Content-Type", "application/json")
 	log.Printf("Requesting info from user id: " + id)
-	json.NewEncoder(w).Encode(user)
+	// w.WriteHeader(http.StatusOK)
+	m, _ := json.Marshal(user)
+	w.Write(m)
+
 }
 
 //PasswordMatch
@@ -268,14 +284,21 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 //DeleteUser
 //@DELETE
 func deleteUser(w http.ResponseWriter, r *http.Request) {
-	param := mux.Vars(r)
-	json := simplejson.New()
-	ID := param["id"]
+	w.Header().Set("Content-Type", "application/json")
+	token, err := parseToken(w, r)
+	if err != nil {
+		m := Message{"message", "Unauthorized Route."}
+		payload, _ := json.Marshal(m)
+		w.Write(payload)
+		return
+	}
+	ID := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"])
 	w.Header().Set("Content-Type", "application/json")
 	stmt, err := db.Prepare("delete from user where id= ?;")
-
 	if err != nil {
-		json.Set("message", "Something went wrong...")
+		m := Message{"message", "Something went wrong..."}
+		payload, _ := (json.Marshal(m))
+		w.Write(payload)
 		fmt.Print(err.Error())
 	}
 
@@ -288,8 +311,8 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Print(err.Error())
 	}
-	json.Set("message", "Successfully deleted")
-	payload, _ := json.MarshalJSON()
+	m := Message{"message", "Successfully deleted"}
+	payload, _ := (json.Marshal(m))
 	w.Write(payload)
 }
 
@@ -298,7 +321,14 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 //TODO: Need to add verification to new email before setting new email
 func updateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	ID := mux.Vars(r)["id"]
+	token, err := parseToken(w, r)
+	if err != nil {
+		m := Message{"message", "Unauthorized Route!"}
+		payload, _ := json.Marshal(m)
+		w.Write(payload)
+		return
+	}
+	ID := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"])
 	UserType := r.FormValue("user_type")
 	Prefix := r.FormValue("prefix")
 	FirstName := r.FormValue("first_name")
@@ -362,46 +392,47 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	payload, _ := json.MarshalJSON()
 	w.Write(payload)
 }
-
-//ValidateTokenMiddleware still working on this..
-func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func parseToken(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
 	w.Header().Set("Content-Type", "application/json")
-	json := simplejson.New()
 
 	rawToken := r.Header.Get("Authorization")
-	// token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
-	// 	func(token *jwt.Token) (interface{}, error) {
-	// 		return SecretKey, nil
-	// 	})
+
 	token, err := jwt.Parse(rawToken, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return SecretKey, nil
 	})
-	if err == nil {
+	return token, err
+}
+
+//ValidateTokenMiddleware still working on this..
+func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	// w.Header().Set("Content-Type", "application/json")
+	// json := simplejson.New()
+
+	// rawToken := r.Header.Get("Authorization")
+	// // token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,
+	// // 	func(token *jwt.Token) (interface{}, error) {
+	// // 		return SecretKey, nil
+	// // 	})
+	// token, err := jwt.Parse(rawToken, func(token *jwt.Token) (interface{}, error) {
+	// 	// Don't forget to validate the alg is what you expect:
+	// 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+	// 		return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+	// 	}
+
+	// 	// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+	// 	return SecretKey, nil
+	// })
+	json := simplejson.New()
+	token, err := parseToken(w, r)
+	if err == nil && token.Valid {
 		// idPassed := interface{}(mux.Vars(r)["id"])
 		// fmt.Printf(idPassed.(string))
-		idPassed := mux.Vars(r)["id"]
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			idFromClaims := fmt.Sprint(claims["id"])
-			if idPassed == idFromClaims {
-				next(w, r)
-			} else { //trying to access someone else's info
-				json.Set("message", "Unauthorized access to this resource")
-				payload, _ := json.MarshalJSON()
-				w.WriteHeader(http.StatusUnauthorized)
-				w.Write(payload)
-			}
-		} else {
-			json.Set("message", "Unauthorized access to this resource")
-			payload, _ := json.MarshalJSON()
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Write(payload)
-		}
+		// idFromClaims := fmt.Sprint(claims["id"]) claims, ok := token.Claims.(jwt.MapClaims)
+		next(w, r)
 	} else {
 		json.Set("message", "Unauthorized access to this resource")
 		payload, _ := json.MarshalJSON()
@@ -428,7 +459,7 @@ func main() {
 	// admin := mux.NewRouter()
 
 	//Put protection on all user routes
-	r.PathPrefix("/api/user/{id}").Handler(negroni.New(
+	r.PathPrefix("/api/user").Handler(negroni.New(
 		negroni.HandlerFunc(ValidateTokenMiddleware),
 		negroni.Wrap(api),
 	))
@@ -441,24 +472,24 @@ func main() {
 	}).Methods("GET")
 	//GETUSERS
 	//@ADMIN ONLY
-	r.HandleFunc("/api/users", getAllUsers).Methods("GET")
+	r.HandleFunc("/users", getAllUsers).Methods("GET")
 	// router.GET("/api/users", getAllUsers)
 	//GETBYID
 	//@PRIVATE - LOGGED
 
 	//@PRIVATE
-	api.HandleFunc("/api/user/{id}", getByID).Methods("GET")
+	api.HandleFunc("/api/user", getByID).Methods("GET")
 
 	//@PUBLIC
 	r.HandleFunc("/create", createUser).Methods("POST")
 	// router.POST("/api/user", createUser)
 
 	//@PRIVATE
-	api.HandleFunc("/api/user/{id}", deleteUser).Methods("DELETE")
+	api.HandleFunc("/api/user", deleteUser).Methods("DELETE")
 	// r.HandleFunc("/api/user/{id}", deleteUser).Methods("DELETE")
 	// router.DELETE("/api/user/:id", deleteUser)
 
-	api.HandleFunc("/api/user/{id}", updateUser).Methods("PUT")
+	api.HandleFunc("/api/user", updateUser).Methods("PUT")
 	// router.PUT("/api/user/:id", updateUser)
 
 	r.HandleFunc("/login", login).Methods("PUT")
