@@ -441,7 +441,7 @@ func parseToken(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
 	return token, err
 }
 
-//ValidateTokenMiddleware still working on this..
+//ValidateTokenMiddleware checks if the token in the header is valid.
 func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	// w.Header().Set("Content-Type", "application/json")
 	// json := simplejson.New()
@@ -457,7 +457,6 @@ func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.H
 	// 		return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 	// 	}
 
-	// 	// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 	// 	return SecretKey, nil
 	// })
 	json := simplejson.New()
