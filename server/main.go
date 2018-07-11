@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/goware/emailx"
+
 	simplejson "github.com/bitly/go-simplejson"
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
@@ -26,7 +28,9 @@ var db, err = sql.Open("mysql", "testuser:password@tcp(127.0.0.1:3306)/test")
 //SecretKey is a global variable used to add 'password' to all the JWT
 var SecretKey = keys.Secret
 
+//	BEGIN STRUCTS FOR PROGRAM BEGIN STRUCTS FOR PROGRAM BEGIN STRUCTS FOR PROGRAM
 //User has all of the elements for a basic user in this web app.
+
 type User struct {
 	ID           int    `db:"id" `
 	UserType     int    `db:"user_type" form:"user_type" validate:"required"`
@@ -47,6 +51,22 @@ type User struct {
 	LoginAttempt int    `db:"login_attempt" form:"login_attempt"`
 	ActiveStatus int    `db:"active_status" form:"active_status"`
 }
+
+//These structs are for reading in the JSON Req Data passed into create and login routes... {
+type tempNewUser struct {
+	First           string `bson:"first_name" json:"first_name" db:"first_name"`
+	Last            string `bson:"last_name" json:"last_name" db:"last_name"`
+	Email           string `bson:"email" json:"email" db:"email"`
+	Password        string `bson:"password" json:"password" db:"password"`
+	ConfirmPassword string `bson:"confirm_password" json:"confirm_password"`
+}
+type tempUserLogin struct {
+	Email    string `bson:"email" json:"email" db:"email"`
+	Password string `bson:"password" bson:"password" db:"password"`
+}
+
+//	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS
+// }
 
 //CREATING THE TABLE FOR MYSQL
 
@@ -220,22 +240,20 @@ func doesEmailExist(email string) bool {
 
 //TESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTING
 
-type tempNewUser struct {
-	First           string `bson:"first_name" json:"first_name" db:"first_name"`
-	Last            string `bson:"last_name" json:"last_name" db:"last_name"`
-	Email           string `bson:"email" json:"email" db:"email"`
-	Password        string `bson:"password" json:"password" db:"password"`
-	ConfirmPassword string `bson:"confirm_password" json:"confirm_password"`
-}
-
 //CreateUser
 //@POST
 //TODO- FIX r.FormValue
 func createUser(w http.ResponseWriter, r *http.Request) {
-
 	var user tempNewUser
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(&user)
+	var everythingOkay bool = true
+	// error := simplejson.New()
+	// error.Set("email", "needs to be valid")
+	// payload, _ := error.MarshalJSON()
+	// w.Write(payload)
+	// w.WriteHeader(http.StatusBadRequest)
+
 	_, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
 		log.Println("Error reading input json")
@@ -283,35 +301,67 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json := simplejson.New()
 
-	if user.Email == "" || user.Password == "" || user.ConfirmPassword == "" || user.First == "" || user.Last == "" {
-		json.Set("message", "Please fill all mandatory fields...")
+	if user.Email == "" {
+		json.Set("email", "Enter email")
+		everythingOkay = false
+	}
+	if user.First == "" {
+		json.Set("first_name", "Enter first name")
+		everythingOkay = false
+	}
+	if user.Last == "" {
+		everythingOkay = false
+		json.Set("last_name", "Enter last name")
+	}
+	if user.Password == "" {
+		everythingOkay = false
+		json.Set("password", "Enter password")
+	}
+	// if user.ConfirmPassword == "" {
+	// 	everythingOkay = false
+	// 	json.Set("confirm_password", "Confirm Password field is required")
+	// }
+
+	if !everythingOkay {
+		payload, _ := json.MarshalJSON()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(payload)
+		return
+	}
+	err = emailx.Validate(user.Email)
+	if err != nil {
+		everythingOkay = false
+		json.Set("email", "Please enter a valid email.")
+		// payload, _ := json.MarshalJSON()
+		// w.Header().Set("Content-Type", "application/json")
+		// w.WriteHeader(http.StatusBadRequest)
+		// w.Write(payload)
+	}
+
+	//If email already exists
+	if doesEmailExist(user.Email) {
+		everythingOkay = false
+		json.Set("email", "An account with this email already exists.")
+	}
+	if len(user.Password) < 6 || len(user.Password) > 20 {
+		everythingOkay = false
+		json.Set("password", "Use 6 character or more for your password.")
+	}
+
+	if user.Password != user.ConfirmPassword {
+		everythingOkay = false
+		json.Set("confirm_password", "Passwords must match")
+	}
+	if !everythingOkay {
 		payload, err := json.MarshalJSON()
 		if err != nil {
 			w.Write([]byte("Something went wrong..."))
 		} else {
 			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
 			w.Write(payload)
 		}
-		return
-	}
-	//If email already exists
-	if doesEmailExist(user.Email) {
-		json.Set("message", "An account with this email or phone already exists...")
-		payload, _ := json.MarshalJSON()
-		w.Write(payload)
-		return
-	}
-	if len(user.Password) < 6 || len(user.Password) > 20 {
-		json.Set("message", "Password must be between 6-20 Characters")
-		payload, _ := json.MarshalJSON()
-		w.Write(payload)
-		return
-	}
-
-	if user.Password != user.ConfirmPassword {
-		json.Set("message", "Passwords do not match")
-		payload, _ := json.MarshalJSON()
-		w.Write(payload)
 		return
 	}
 
@@ -331,6 +381,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Print(err.Error())
 		json.Set("message", "Something went wrong, please check every field and try again")
 		payload, _ := json.MarshalJSON()
+		w.WriteHeader(http.StatusBadGateway)
 		w.Write(payload)
 		// c.JSON(http.StatusOK, gin.H{
 		// 	"message": fmt.Sprintf("Something went wrong, please check every field and try again"),
@@ -342,6 +393,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 	json.Set("message", "Successfully created")
 	payload, _ := json.MarshalJSON()
+	w.WriteHeader(http.StatusOK)
 	w.Write(payload)
 }
 
