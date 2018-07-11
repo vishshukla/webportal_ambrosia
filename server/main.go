@@ -119,19 +119,39 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 
 func login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "applications/json")
-
-	Email := r.FormValue("email")
-	Password := r.FormValue("password")
+	var user tempUserLogin
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(&user)
+	//This is used for front-end validations
+	var everythingOkay = true
 	json := simplejson.New()
-	var ID int
-	err := db.QueryRow("SELECT id FROM user WHERE email= ?", Email).Scan(&ID)
-	if err != nil {
-		json.Set("message", "No user with that email was found.")
+
+	if user.Email == "" {
+		everythingOkay = false
+		json.Set("email", "Enter email")
+	}
+	if user.Password == "" {
+		everythingOkay = false
+		json.Set("password", "Enter password")
+	}
+	if !everythingOkay {
 		payload, _ := json.MarshalJSON()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write(payload)
 		return
 	}
-	if passwordMatch(Email, Password) {
+
+	var ID int
+	err := db.QueryRow("SELECT id FROM user WHERE email= ?", user.Email).Scan(&ID)
+	if err != nil {
+		json.Set("message", "No user with that email was found.")
+		payload, _ := json.MarshalJSON()
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(payload)
+		return
+	}
+	if passwordMatch(user.Email, user.Password) {
 
 		//creating a token
 		token := jwt.New(jwt.SigningMethodHS256)
@@ -144,6 +164,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		json.Set("success", true)
 		json.Set("token", tokenString)
 		payload, _ := json.MarshalJSON()
+		w.WriteHeader(http.StatusOK)
 		w.Write(payload)
 		return
 	}
@@ -151,6 +172,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	json.Set("success", false)
 	json.Set("message", "Invalid credentials, please check and try again.")
 	payload, _ := json.MarshalJSON()
+	w.WriteHeader(http.StatusBadRequest)
 	w.Write(payload)
 	// switch {
 	// case err != nil:
