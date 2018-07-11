@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	simplejson "github.com/bitly/go-simplejson"
@@ -27,15 +28,15 @@ var SecretKey = keys.Secret
 
 //User has all of the elements for a basic user in this web app.
 type User struct {
-	ID           int    `db:"id"`
+	ID           int    `db:"id" `
 	UserType     int    `db:"user_type" form:"user_type" validate:"required"`
 	Prefix       string `db:"prefix" form:"prefix"`
 	FirstName    string `db:"first_name" form:"first_name" validate:"required"`
 	MiddleName   string `db:"middle_name" form:"middle_name"`
-	LastName     string `db:"last_name" form:"last_name" validate:"required"`
+	LastName     string `db:"last_name" form:"last_name" validate:"required" `
 	Suffix       string `db:"suffix" form:"suffix"`
-	Email        string `db:"email" form:"email" validate:"required,email"`
-	Password     string `db:"password" form:"password" validate:"required,password"`
+	Email        string `db:"email" form:"email" validate:"required,email" `
+	Password     string `db:"password" form:"password" validate:"required,password" `
 	Ssn          string `db:"ssn" form:"ssn"`
 	Phone        string `db:"phone" form:"phone" validate:"required"`
 	Address      string `db:"address" form:"address" validate:"required"`
@@ -50,7 +51,7 @@ type User struct {
 //CREATING THE TABLE FOR MYSQL
 
 func createTable() {
-	stmt, err := db.Prepare("CREATE TABLE user (id INT NOT NULL AUTO_INCREMENT, user_type INT, prefix VARCHAR(10), first_name VARCHAR(40), middle_name VARCHAR(40), last_name VARCHAR(40), suffix VARCHAR(10) , email VARCHAR(60), password VARCHAR(200), ssn VARCHAR(9),phone VARCHAR(15), address VARCHAR(100), zipcode VARCHAR(8), city VARCHAR(20), state VARCHAR(2), country VARCHAR(100), login_attempt INT, active_status INT, PRIMARY KEY (id));")
+	stmt, err := db.Prepare("CREATE TABLE user (id INT NOT NULL AUTO_INCREMENT, user_type INT DEFAULT 1, prefix VARCHAR(10) DEFAULT '', first_name VARCHAR(40) , middle_name VARCHAR(40) DEFAULT '', last_name VARCHAR(40), suffix VARCHAR(10) DEFAULT '' , email VARCHAR(60), password VARCHAR(200), ssn VARCHAR(9) DEFAULT '',phone VARCHAR(15) DEFAULT '', address VARCHAR(100) DEFAULT '', zipcode VARCHAR(8) DEFAULT '', city VARCHAR(20) DEFAULT '', state VARCHAR(2) DEFAULT '', country VARCHAR(100) DEFAULT '', login_attempt INT DEFAULT 0, active_status INT DEFAULT 0, PRIMARY KEY (id));")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -69,6 +70,7 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 		user  User
 		users []User
 	)
+
 	rows, err := db.Query("SELECT id, user_type, first_name, middle_name, last_name, suffix, email, ssn, phone, address, zipcode, city, state, country, active_status FROM user;")
 
 	if err != nil {
@@ -159,9 +161,13 @@ func getByID(w http.ResponseWriter, r *http.Request) {
 		w.Write(payload)
 		return
 	}
-	row := db.QueryRow("SELECT id, user_type, prefix, first_name, middle_name, last_name, suffix, email, phone, address, zipcode, city, state, country, active_status, ssn FROM USER WHERE id = ?", id)
+	row := db.QueryRow("SELECT id, user_type, prefix, first_name, middle_name, last_name, suffix, email, phone, address, zipcode, city, state, country, active_status, ssn FROM user WHERE id=?", id)
 
-	row.Scan(&user.ID, &user.UserType, &user.Prefix, &user.FirstName, &user.MiddleName, &user.LastName, &user.Suffix, &user.Email, &user.Phone, &user.Address, &user.Zipcode, &user.City, &user.State, &user.Country, &user.ActiveStatus, &user.Ssn)
+	err = row.Scan(&user.ID, &user.UserType, &user.Prefix, &user.FirstName, &user.MiddleName, &user.LastName, &user.Suffix, &user.Email, &user.Phone, &user.Address, &user.Zipcode, &user.City, &user.State, &user.Country, &user.ActiveStatus, &user.Ssn)
+	if err != nil {
+		log.Printf("Couldn't find user...")
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	log.Printf("Requesting info from user id: " + id)
@@ -192,9 +198,9 @@ func passwordMatch(email string, pwd string) bool {
 
 //isEmailOrPhoneInUse
 //Used in creating a user
-func isEmailOrPhone(email, phone string) bool {
+func doesEmailExist(email string) bool {
 	var ID int
-	err := db.QueryRow("SELECT id FROM user WHERE email=? OR phone=?", email, phone).Scan(&ID)
+	err := db.QueryRow("SELECT id FROM user WHERE email=?", email).Scan(&ID)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -211,41 +217,43 @@ func isEmailOrPhone(email, phone string) bool {
 
 //TESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTING
 // formatRequest generates ascii representation of a request
-func formatRequest(r *http.Request) string {
-	// Create return string
-	var request []string
-	// Add the request string
-	url := fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto)
-	request = append(request, url)
-	// Add the host
-	request = append(request, fmt.Sprintf("Host: %v", r.Host))
-	// Loop through headers
-	for name, headers := range r.Header {
-		name = strings.ToLower(name)
-		for _, h := range headers {
-			request = append(request, fmt.Sprintf("%v: %v", name, h))
-		}
-	}
-
-	// If this is a POST, add post data
-	if r.Method == "POST" {
-		r.ParseForm()
-		request = append(request, "\n")
-		request = append(request, r.Form.Encode())
-	}
-	// Return the request as a string
-	return strings.Join(request, "\n")
-}
 
 //TESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTING
+
+type tempNewUser struct {
+	First           string `bson:"first_name" json:"first_name" db:"first_name"`
+	Last            string `bson:"last_name" json:"last_name" db:"last_name"`
+	Email           string `bson:"email" json:"email" db:"email"`
+	Password        string `bson:"password" json:"password" db:"password"`
+	ConfirmPassword string `bson:"confirm_password" json:"confirm_password"`
+}
 
 //CreateUser
 //@POST
 //TODO- FIX r.FormValue
 func createUser(w http.ResponseWriter, r *http.Request) {
 
-	formatRequest(r)
+	var user tempNewUser
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(&user)
+	_, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+	if err != nil {
+		log.Println("Error reading input json")
+		panic(err)
+	}
+	if err := r.Body.Close(); err != nil {
+		panic(err)
+	}
+	// if err := json.Unmarshal(body, &user); err != nil {
+	// 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	// 	w.WriteHeader(422) // unprocessable entity
+	// 	if err := json.NewEncoder(w).Encode(err); err != nil {
+	// 		panic(err)
+	// 	}
+	// }
+	// Put the body back for FormatRequest to read it
 
+	// Put it back before you call client.Do()
 	w.Header().Set("Content-Type", "application/json")
 	// if err != nil {
 	// 	w.WriteHeader(http.StatusBadGateway)
@@ -255,30 +263,27 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	// 	fmt.Printf(key, values)
 	// }
 	// logic part of log in
-	UserType := r.FormValue("user_type")
-	Prefix := r.FormValue("prefix")
-	FirstName := r.FormValue("first_name")
-	MiddleName := r.FormValue("middle_name")
-	LastName := r.FormValue("last_name")
-	Suffix := r.FormValue("suffix")
-	Email := r.FormValue("email")
-	Password := r.FormValue("password")
-	ConfirmPassword := r.FormValue("confirm_password")
-	Ssn := r.FormValue("ssn")
-	Phone := r.FormValue("phone")
-	Address := r.FormValue("address")
-	Zipcode := r.FormValue("zipcode")
-	City := r.FormValue("city")
-	State := r.FormValue("state")
-	Country := r.FormValue("country")
+	// UserType := r.FormValue("user_type")
+	// Prefix := r.FormValue("prefix")
+	// FirstName := r.FormValue("first_name")
+	// MiddleName := r.FormValue("middle_name")
+	// LastName := r.FormValue("last_name")
+	// Suffix := r.FormValue("suffix")
+	// Email := r.FormValue("email")
+	// Password := r.FormValue("password")
+	// ConfirmPassword := r.FormValue("confirm_password")
+	// Ssn := r.FormValue("ssn")
+	// Phone := r.FormValue("phone")
+	// Address := r.FormValue("address")
+	// Zipcode := r.FormValue("zipcode")
+	// City := r.FormValue("city")
+	// State := r.FormValue("state")
+	// Country := r.FormValue("country")
 
 	w.Header().Set("Content-Type", "application/json")
 	json := simplejson.New()
 
-	if Email == "" || Password == "" || ConfirmPassword == "" || FirstName == "" || LastName == "" {
-		if Email == "" {
-			json.Set("Email", "is blank")
-		}
+	if user.Email == "" || user.Password == "" || user.ConfirmPassword == "" || user.First == "" || user.Last == "" {
 		json.Set("message", "Please fill all mandatory fields...")
 		payload, err := json.MarshalJSON()
 		if err != nil {
@@ -290,38 +295,38 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//If email already exists
-	if isEmailOrPhone(Email, Phone) {
+	if doesEmailExist(user.Email) {
 		json.Set("message", "An account with this email or phone already exists...")
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
 	}
-	if len(Password) < 6 || len(Password) > 20 {
+	if len(user.Password) < 6 || len(user.Password) > 20 {
 		json.Set("message", "Password must be between 6-20 Characters")
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
 	}
 
-	if Password != ConfirmPassword {
+	if user.Password != user.ConfirmPassword {
 		json.Set("message", "Passwords do not match")
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
 	}
 
-	HashedPassword, err := bcrypt.GenerateFromPassword([]byte(Password), bcrypt.DefaultCost)
+	HashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		panic(err)
 	}
 	//insert into database
-	stmt, err := db.Prepare("insert into user (user_type,prefix,first_name,middle_name,last_name,suffix,email,password,ssn,phone,address,zipcode,city,state,country,login_attempt,active_status) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,0,1);")
+	stmt, err := db.Prepare("insert into user (first_name,last_name,email,password,active_status) values(?,?,?,?,1);")
 	if err != nil {
 		log.Println("Error in the executing call")
 		fmt.Print(err.Error())
 	}
 
-	_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, Email, string(HashedPassword), Ssn, Phone, Address, Zipcode, City, State, Country)
+	_, err = stmt.Exec(user.First, user.Last, user.Email, string(HashedPassword))
 	if err != nil {
 		fmt.Print(err.Error())
 		json.Set("message", "Something went wrong, please check every field and try again")
@@ -523,17 +528,17 @@ func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.H
 }
 
 func main() {
-	// createTable() <-- already created table
+	// createTable() //<-- already created table
 
-	// if err != nil {
-	// 	fmt.Print(err.Error())
-	// }
-	// defer db.Close()
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	defer db.Close()
 
-	// err = db.Ping()
-	// if err != nil {
-	// 	fmt.Print(err.Error())
-	// }
+	err = db.Ping()
+	if err != nil {
+		fmt.Print(err.Error())
+	}
 	r := mux.NewRouter()
 	api := mux.NewRouter()
 	// admin := mux.NewRouter()
