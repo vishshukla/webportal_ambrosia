@@ -4,7 +4,7 @@ Project is currently under development during interning here at Ambrosia Systems
 
 ## To run locally
 
-The program is organized with client and server. To run this program locally, please have MySQL downloaded. PLEASE UNCOMMENT CREATE TABLE FUNCTION FROM MAIN.GO to have it create the proper table for you locally. 
+The program is organized with client and server. To run this program locally, please have MySQL downloaded. Please uncomment createTable function from main.go to have the program create the proper table for you locally. 
 
 ### Prerequisites
 
