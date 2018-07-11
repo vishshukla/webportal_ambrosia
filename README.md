@@ -28,5 +28,3 @@ NodeJS
 ## Author
 
 * **Vishwas Shukla** - *Software Developer* - [vishshukla](https://github.com/vishshukla)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
