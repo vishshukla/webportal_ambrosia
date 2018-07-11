@@ -29,8 +29,8 @@ var db, err = sql.Open("mysql", "testuser:password@tcp(127.0.0.1:3306)/test")
 var SecretKey = keys.Secret
 
 //	BEGIN STRUCTS FOR PROGRAM BEGIN STRUCTS FOR PROGRAM BEGIN STRUCTS FOR PROGRAM
-//User has all of the elements for a basic user in this web app.
 
+//User has all of the elements for a basic user in this web app.
 type User struct {
 	ID           int    `db:"id" `
 	UserType     int    `db:"user_type" form:"user_type" validate:"required"`
@@ -162,6 +162,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	// }
 }
 
+//Message used to send JSON back one time.
 type Message struct {
 	Name string
 	Body string
@@ -247,7 +248,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	var user tempNewUser
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(&user)
-	var everythingOkay bool = true
+	var everythingOkay = true
 	// error := simplejson.New()
 	// error.Set("email", "needs to be valid")
 	// payload, _ := error.MarshalJSON()
