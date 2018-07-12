@@ -125,10 +125,13 @@ func login(w http.ResponseWriter, r *http.Request) {
 	//This is used for front-end validations
 	var everythingOkay = true
 	json := simplejson.New()
-
+	err := emailx.Validate(user.Email)
 	if user.Email == "" {
 		everythingOkay = false
 		json.Set("email", "Enter email")
+	} else if err != nil {
+		everythingOkay = false
+		json.Set("email", "Invalid email")
 	}
 	if user.Password == "" {
 		everythingOkay = false
@@ -143,9 +146,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var ID int
-	err := db.QueryRow("SELECT id FROM user WHERE email= ?", user.Email).Scan(&ID)
+	var FirstName string
+	var LastName string
+	err = db.QueryRow("SELECT id ,first_name, last_name FROM user WHERE email= ?;", user.Email).Scan(&ID, &FirstName, &LastName)
 	if err != nil {
-		json.Set("message", "No user with that email was found.")
+		log.Print(err)
+		json.Set("email", "No user with that email was found.")
 		payload, _ := json.MarshalJSON()
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(payload)
@@ -156,8 +162,9 @@ func login(w http.ResponseWriter, r *http.Request) {
 		//creating a token
 		token := jwt.New(jwt.SigningMethodHS256)
 		token.Claims = jwt.MapClaims{
-			"id":  ID,
-			"exp": time.Now().Add(time.Hour * 72).Unix(),
+			"id":   ID,
+			"name": fmt.Sprint(FirstName + " " + LastName),
+			"exp":  time.Now().Add(time.Hour * 72).Unix(),
 		}
 
 		tokenString, _ := token.SignedString(SecretKey)
@@ -170,7 +177,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 	//else
 	json.Set("success", false)
-	json.Set("message", "Invalid credentials, please check and try again.")
+	json.Set("password", "Password incorrect")
 	payload, _ := json.MarshalJSON()
 	w.WriteHeader(http.StatusBadRequest)
 	w.Write(payload)
