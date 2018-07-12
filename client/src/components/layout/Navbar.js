@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
-import PropTypes from 'prop-types';
+import {PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import { logoutUser } from '../../actions/authActions';
 
@@ -17,7 +17,7 @@ class Navbar extends Component {
             <ul className="navbar-nav ml-auto">
                 <li className="nav-item">
                     <a href="" onClick={this.onLogoutClick.bind(this)} className="nav-link">
-                        Log out
+                       {' '} Log out
                     </a>
                 </li>
             </ul>
@@ -50,20 +50,19 @@ class Navbar extends Component {
                                 Store
                                 
                                 </Link>
-                            </li>
-                        </ul>
-                        
-                    </div>
 
-                    <div className="collapse navbar-collapse" id="mobile-nav">
-                        {isAuthenticated ? authLinks : guestLinks}
+                            </li>
+
+                        </ul>
+                    {isAuthenticated ? authLinks : guestLinks}
+                        
                     </div>
                 </div>
             </nav>
         )
     }
 }
-Navbar.PropTypes = {
+Navbar.propTypes = {
     logoutUser: PropTypes.func.isRequired,
     auth: PropTypes.object.isRequired
 }
