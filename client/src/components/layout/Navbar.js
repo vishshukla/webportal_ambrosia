@@ -32,7 +32,8 @@ class Navbar extends Component {
                     <Link className="nav-link" to="/login">Login</Link>
                 </li>
             </ul>
-        );
+        ); 
+        
 
         return (
             <nav className="navbar navbar-expand-sm navbar-dark bg-dark mb-4">
