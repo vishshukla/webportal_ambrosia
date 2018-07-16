@@ -1,6 +1,8 @@
+import React from 'react'
 import axios from 'axios';
+import { Redirect } from 'react-router';
 
-import { GET_READINGS, READINGS_LOADING, GET_ERRORS, CLEAR_CURRENT_PROFILE } from './types';
+import { GET_READINGS, READINGS_LOADING, CLEAR_CURRENT_PROFILE } from './types';
 
 // Get current profile
 export const getCurrentReadings = () => dispatch => {
@@ -12,10 +14,8 @@ export const getCurrentReadings = () => dispatch => {
                 payload: res.data
             });
         })
-        .catch(err => dispatch({
-            type: GET_READINGS,
-            payload: {}
-        })
+        .catch(
+            // < Redirect to='/login' />
         );
 }
 
@@ -33,3 +33,7 @@ export const clearCurrentProfile = () => {
         type: CLEAR_CURRENT_PROFILE
     };
 };
+
+export default function () {
+
+}

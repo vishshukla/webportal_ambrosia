@@ -6,5 +6,5 @@ import readingsReducer from './readingsReducer';
 export default combineReducers({
     auth: authReducer,
     errors: errorReducer,
-    profile: readingsReducer,
+    readings: readingsReducer,
 });

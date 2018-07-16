@@ -2,7 +2,6 @@ import { GET_READINGS, READINGS_LOADING, CLEAR_CURRENT_PROFILE } from '../action
 
 const initialState = {
     profile: null,
-    profiles: null,
     loading: false,
 }
 

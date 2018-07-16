@@ -1,5 +1,11 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Route,
+  Link,
+  Switch,
+  Redirect
+} from 'react-router-dom';
 import jwt_decode from 'jwt-decode';
 import setAuthToken from './utils/setAuthToken';
 import { setCurrentUser, logoutUser } from './actions/authActions';
@@ -39,8 +45,17 @@ if (localStorage.jwtToken) {
   }
 }
 
+// const NoMatch = ({ location }) => {
+//   return (
+//     <div>
+//       <h3>No match for <code>{location.pathname}</code></h3>
+//     </div>
+//   )
+// }
+
 class App extends Component {
   render() {
+
     return (
       <Provider store={store}>
         <Router>
@@ -48,9 +63,12 @@ class App extends Component {
             <Navbar />
             <Route exact path="/" component={Landing} />
             <div className="container">
-              <Route exact path="/register" component={Register} />
-              <Route exact path="/login" component={Login} />
-              <Route exact path="/readings" component={Readings} />
+              <Switch>
+                <Route exact path="/register" component={Register} />
+                <Route exact path="/login" component={Login} />
+                <Route exact path="/readings" component={Readings} />
+                {/* <Route exact path="*" component={Login} /> */}
+              </Switch>
 
             </div>
             <Footer />

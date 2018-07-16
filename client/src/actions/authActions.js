@@ -1,6 +1,8 @@
 import axios from 'axios';
+import React from 'react';
 import setAuthToken from '../utils/setAuthToken';
 import jwt_decode from 'jwt-decode';
+import { Redirect } from 'react-router-dom';
 
 import { GET_ERRORS, SET_CURRENT_USER } from "./types";
 /* axios.post('/register', newUser)
@@ -58,4 +60,5 @@ export const logoutUser = () => dispatch => {
     setAuthToken(false);
     // Set current user to {} which will set isAuthenticated to false
     dispatch(setCurrentUser({}));
+    window.location.reload();
 };
