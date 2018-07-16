@@ -65,6 +65,12 @@ type tempUserLogin struct {
 	Password string `bson:"password" bson:"password" db:"password"`
 }
 
+//This struct is used to format the stored readings for a given user...
+type Reading struct {
+	ReadingNumber int    `bson:"reading_number" json:"reading_number" db:"reading"`
+	ReadingTime   string `bson:"reading_time" json:"reading_time" db:"reading_time"`
+}
+
 //	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS
 // }
 
@@ -81,29 +87,6 @@ func createTable() {
 	} else {
 		fmt.Println("Table is successfully created....")
 	}
-}
-
-//GetAllUsers
-//@GET Request
-func getAllUsers(w http.ResponseWriter, r *http.Request) {
-	var (
-		user  User
-		users []User
-	)
-
-	rows, err := db.Query("SELECT id, user_type, first_name, middle_name, last_name, suffix, email, ssn, phone, address, zipcode, city, state, country, active_status FROM user;")
-
-	if err != nil {
-		fmt.Print(err.Error())
-	}
-	for rows.Next() {
-		rows.Scan(&user.ID, &user.UserType, &user.FirstName, &user.MiddleName, &user.LastName, &user.Suffix, &user.Email, &user.Ssn, &user.Phone, &user.Address, &user.Zipcode, &user.City, &user.State, &user.Country, &user.ActiveStatus)
-		users = append(users, user)
-	}
-	defer rows.Close()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
-
 }
 
 // func signOut(c *gin.Context) {
@@ -224,6 +207,57 @@ func getByID(w http.ResponseWriter, r *http.Request) {
 	// w.WriteHeader(http.StatusOK)
 	m, _ := json.Marshal(user)
 	w.Write(m)
+
+}
+
+//GetAllUsers
+//@GET Request
+func getAllUsers(w http.ResponseWriter, r *http.Request) {
+	var (
+		user  User
+		users []User
+	)
+
+	rows, err := db.Query("SELECT id, user_type, first_name, middle_name, last_name, suffix, email, ssn, phone, address, zipcode, city, state, country, active_status FROM user;")
+
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	for rows.Next() {
+		rows.Scan(&user.ID, &user.UserType, &user.FirstName, &user.MiddleName, &user.LastName, &user.Suffix, &user.Email, &user.Ssn, &user.Phone, &user.Address, &user.Zipcode, &user.City, &user.State, &user.Country, &user.ActiveStatus)
+		users = append(users, user)
+	}
+	defer rows.Close()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+
+}
+
+func getReadingsByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var (
+		reading  Reading
+		readings []Reading
+	)
+	token, err := parseToken(w, r)
+	id := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"])
+	if err != nil {
+		m := Message{"Message", "Unauthorized Link"}
+		payload, _ := json.Marshal(m)
+		w.Write(payload)
+		return
+	}
+	rows, err := db.Query("SELECT reading , reading_time FROM app_device_readings WHERE user_id = ?", id)
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+	for rows.Next() {
+		rows.Scan(&reading.ReadingNumber, &reading.ReadingTime)
+		readings = append(readings, reading)
+	}
+	defer rows.Close()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(readings)
 
 }
 
@@ -557,6 +591,7 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	payload, _ := json.MarshalJSON()
 	w.Write(payload)
 }
+
 func parseToken(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -572,7 +607,7 @@ func parseToken(w http.ResponseWriter, r *http.Request) (*jwt.Token, error) {
 	return token, err
 }
 
-//ValidateTokenMiddleware checks if the token in the header is valid.
+//ValidateTokenMiddleware checks if the Auth token in the header is valid.
 func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	// w.Header().Set("Content-Type", "application/json")
 	// json := simplejson.New()
@@ -647,6 +682,7 @@ func main() {
 	//@PRIVATE
 	api.HandleFunc("/api/user", getByID).Methods("GET")
 
+	api.HandleFunc("/api/user/readings", getReadingsByID).Methods("GET")
 	//@PUBLIC
 	r.HandleFunc("/register", createUser).Methods("POST")
 	// router.POST("/api/user", createUser)
