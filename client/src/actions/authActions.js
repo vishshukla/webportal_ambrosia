@@ -1,8 +1,8 @@
 import axios from 'axios';
-import React from 'react';
+// import React from 'react';
 import setAuthToken from '../utils/setAuthToken';
 import jwt_decode from 'jwt-decode';
-import { Redirect } from 'react-router-dom';
+// import { Redirect } from 'react-router-dom';
 
 import { GET_ERRORS, SET_CURRENT_USER } from "./types";
 /* axios.post('/register', newUser)

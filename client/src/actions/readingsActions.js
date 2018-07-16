@@ -1,6 +1,6 @@
-import React from 'react'
+// import React from 'react'
 import axios from 'axios';
-import { Redirect } from 'react-router';
+// import { Redirect } from 'react-router';
 
 import { GET_READINGS, READINGS_LOADING, CLEAR_CURRENT_PROFILE } from './types';
 

@@ -1,7 +1,7 @@
 import { GET_READINGS, READINGS_LOADING, CLEAR_CURRENT_PROFILE } from '../actions/types';
 
 const initialState = {
-    profile: null,
+    readings: {},
     loading: false,
 }
 
@@ -15,13 +15,13 @@ export default function (state = initialState, action) {
         case GET_READINGS:
             return {
                 ...state,
-                profile: action.payload,
+                readings: action.payload,
                 loading: false
             };
         case CLEAR_CURRENT_PROFILE:
             return {
                 ...state,
-                profile: null
+                readings: {}
             }
         default:
             return state;

@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
-import {PropTypes } from 'prop-types';
+import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import { logoutUser } from '../../actions/authActions';
+// import { getCurrentReadings } from '../../actions/readingsActions';
 import { clearCurrentProfile } from '../../actions/readingsActions';
 
 
@@ -14,24 +15,23 @@ class Navbar extends Component {
     }
 
     render() {
-        const { isAuthenticated} = this.props.auth;
+        const { isAuthenticated } = this.props.auth;
 
         const authLinks = (
             <ul className="navbar-nav ml-auto">
                 <li className="nav-item">
-                    <Link className="nav-link" to="/readings">Readings</Link>
+                    <Link className="nav-link" /*onClick={this.getCurrentReadings()}*/ to="/readings">Readings</Link>
                 </li>
                 <li className="nav-item">
                     <Link className="nav-link" to="/settings">Settings</Link>
                 </li>
                 <li className="nav-item">
                     <Link to="/" onClick={this.onLogoutClick.bind(this)} className="nav-link">
-                       {' '} Log out
+                        {' '} Log out
                     </Link>
                 </li>
             </ul>
         );
-
         const guestLinks = (
             <ul className="navbar-nav ml-auto">
                 <li className="nav-item">
@@ -41,8 +41,8 @@ class Navbar extends Component {
                     <Link className="nav-link" to="/login">Login</Link>
                 </li>
             </ul>
-        ); 
-        
+        );
+
 
         return (
             <nav className="navbar navbar-expand-sm navbar-dark bg-dark mb-4">
@@ -55,17 +55,17 @@ class Navbar extends Component {
                     <div className="collapse navbar-collapse" id="mobile-nav">
                         <ul className="navbar-nav mr-auto">
                             <li className="nav-item">
-                                <Link className="nav-link" to="/store">
+                                {/* <Link className="nav-link" to="/store">
                                 {' '}
                                 Store
                                 
-                                </Link>
+                                </Link> */}
 
                             </li>
 
                         </ul>
-                    {isAuthenticated ? authLinks : guestLinks}
-                        
+                        {isAuthenticated ? authLinks : guestLinks}
+
                     </div>
                 </div>
             </nav>

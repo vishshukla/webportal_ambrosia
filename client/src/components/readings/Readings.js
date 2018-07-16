@@ -4,20 +4,15 @@ import { connect } from 'react-redux';
 import { getCurrentReadings } from '../../actions/readingsActions';
 import Spinner from '../common/Spinner';
 
-function showObject(obj) {
-    var result = "";
-    for (var p in obj) {
-        for (var q in obj[p]) {
-            result += q + " , " + obj[p][q] + "\n";
-        }
-    }
-    return result;
-}
-
 class Readings extends Component {
 
     componentDidMount() {
         this.props.getCurrentReadings();
+
+
+        if (!this.props.auth.isAuthenticated) {
+            this.props.history.push('/');
+        }
     }
     // comp
     // componentDidMount() {
@@ -26,11 +21,10 @@ class Readings extends Component {
     //     }
     // }
     render() {
-        if (!this.props.auth.isAuthenticated) {
-            this.props.history.push('/');
-        }
+
+
         const { user } = this.props.auth;
-        const { profile, loading } = this.props.readings;
+        const { readings, loading } = this.props.readings;
 
         let readingsContent;
 
@@ -39,7 +33,7 @@ class Readings extends Component {
         }
         else {
             // Check if logged in user has any reading data
-            if (profile === null) {
+            if (readings === {}) {
                 readingsContent = (
                     <div >
                         <p className="lead text-muted text-center">
@@ -49,17 +43,22 @@ class Readings extends Component {
                     </div>
                 )
             } else {
+                var rows = {}
+                for (var x = 0; x < readings.length; ++x) {
+
+                }
+                console.log(rows)
                 // User is logged in but has no readings
                 readingsContent = (
-                    <div >
-                        <h4>{showObject(profile)}</h4>
+                    <div>
+
                     </div>
                 )
             }
         }
 
         return (
-            <div className="readings">
+            <div className="readings" >
                 <div className="container">
                     <div className="row">
                         <div className="col-md-12">
