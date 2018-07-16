@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 
-	keys "github.com/vishshukla/learning_go/server/config"
+	keys "github.com/vishshukla/webportal_ambrosia/server/config"
 
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/go-sql-driver/mysql"
