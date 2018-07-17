@@ -6,6 +6,7 @@ import './styles/Landing.css';
 import newlogo from './newlogo.png';
 import TextFieldGroup from '../common/TextFieldGroup';
 import { loginUser } from '../../actions/authActions';
+// import Spinner from '../common/Spinner';
 class Landing extends Component {
     constructor(props) {
         super(props);
@@ -51,9 +52,9 @@ class Landing extends Component {
         this.props.loginUser(userData);
     }
 
-    onRegisterAttempt(e) {
+    // onRegisterAttempt(e) {
 
-    }
+    // }
 
 
     render() {
