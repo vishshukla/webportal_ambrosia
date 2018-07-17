@@ -10,6 +10,7 @@ import { GET_ERRORS, SET_CURRENT_USER } from "./types";
             .catch(err => this.setState({ errors: err.response.data })) 
 */
 // Register User
+// axios.defaults.baseURL = 'localhost:8000'
 export const registerUser = (userData, history) => dispatch => {
     axios.post('/register', userData)
         .then(red => history.push('/login'))

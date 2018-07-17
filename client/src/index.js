@@ -5,11 +5,16 @@ import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 import $ from 'jquery';
 
-$(window).ready(function () {
-    $('#loading').hide()
+
+//paste this code under the head tag or in a separate js file.
+// Wait for window load
+$(window).on('load', function () {
+    setTimeout(() => {
+        $(".se-pre-con").fadeIn("fast");
+        $(".se-pre-con").fadeOut("slow");
+    }, 600);
+    // $(".se-pre-con").fadeOut("slow");
 });
-
-
 
 ReactDOM.render(<App />, document.getElementById('root'));
 registerServiceWorker();
