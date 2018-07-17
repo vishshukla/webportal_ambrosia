@@ -7,7 +7,7 @@
       "type": "image/x-icon"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "./app.js",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff"
