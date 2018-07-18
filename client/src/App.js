@@ -14,8 +14,6 @@ import { Provider } from "react-redux";
 import store from './store';
 
 import Landing from './components/layout/Landing';
-import Register from './components/auth/Register';
-import Login from './components/auth/Login';
 import Readings from './components/readings/Readings';
 
 import './App.css';
@@ -46,11 +44,10 @@ if (localStorage.jwtToken) {
 // const NoMatch = ({ location }) => {
 //   return (
 //     <div>
-//       <h3>No match for <code>{location.pathname}</code></h3>
+//       <h3>ERROR 404: <code>{location.pathname}</code></h3>
 //     </div>
 //   )
 // }
-
 class App extends Component {
   render() {
 
@@ -58,13 +55,13 @@ class App extends Component {
       <Provider store={store}>
         <Router>
           <div className="App">
-            <Route exact path="/" component={Landing} />
             <div className="container">
               <Switch>
-                <Route exact path="/register" component={Register} />
-                <Route exact path="/login" component={Login} />
+                <Route exact path="/" component={Landing} />
+                {/* <Route exact path="/register" component={Register} /> */}
+                {/* <Route exact path="/login" component={Login} /> */}
                 <Route exact path="/readings" component={Readings} />
-                {/* <Route exact path="*" component={Login} /> */}
+                <Route exact path="*" component={Landing} />
               </Switch>
             </div>
           </div>

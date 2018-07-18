@@ -1,11 +1,12 @@
 import React, { Component } from 'react'
-import { Link } from 'react-router-dom'
+// import { Link } from 'react-router-dom'
 import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import './styles/Landing.css';
 import newlogo from './newlogo.png';
 import TextFieldGroup from '../common/TextFieldGroup';
-import { loginUser } from '../../actions/authActions';
+import { loginUser, registerUser } from '../../actions/authActions';
+import $ from 'jquery';
 // import Spinner from '../common/Spinner';
 class Landing extends Component {
     constructor(props) {
@@ -17,11 +18,11 @@ class Landing extends Component {
             password: '',
             confirm_password: '',
             errors: {},
-
+            isHidden: true,
         };
         this.onChange = this.onChange.bind(this);
         this.onSubmitLoginAttempt = this.onSubmitLoginAttempt.bind(this);
-        // this.onSubmitRegistrationAttempt = this.onSubmitRegistrationAttempt.bind(this);
+        this.onSubmitRegistrationAttempt = this.onSubmitRegistrationAttempt.bind(this);
     }
 
     componentDidMount() {
@@ -52,10 +53,50 @@ class Landing extends Component {
         this.props.loginUser(userData);
     }
 
-    // onRegisterAttempt(e) {
+    onSubmitRegistrationAttempt(e) {
+        e.preventDefault();
 
-    // }
+        const newUser = {
+            first_name: this.state.first_name,
+            last_name: this.state.last_name,
+            email: this.state.email,
+            password: this.state.password,
+            confirm_password: this.state.confirm_password
+        }
+        this.props.registerUser(newUser, this.props.history);
+    }
+    showLoginForm() {
+        $(".se-pre-con").fadeIn("fast");
+        $(".se-pre-con").fadeOut("slow");
+        setTimeout(() => {
+            window.location.reload()
+            // this.setState({});
+            let login_button = document.getElementById("login_button");
+            let regForm = document.getElementById("registration_form_body");
+            let login_form = document.getElementById("login_form_body");
+            let reg_button = document.getElementById("register_button");
+            login_form.style.display = "block";
+            regForm.style.display = "none";
 
+            login_button.classList.add('disabled');
+            reg_button.classList.remove('disabled');
+        }, 200)
+
+    }
+    showRegistraionForm() {
+        $(".se-pre-con").fadeIn("fast");
+        $(".se-pre-con").fadeOut("slow");
+        setTimeout(() => {
+            let login_button = document.getElementById("login_button");
+            let regForm = document.getElementById("registration_form_body");
+            let login_form = document.getElementById("login_form_body");
+            let reg_button = document.getElementById("register_button");
+            login_form.style.display = "none";
+            regForm.style.display = "block";
+            reg_button.classList.add('disabled');
+            login_button.classList.remove('disabled');
+        }, 200);
+    }
 
     render() {
         const { errors } = this.state;
@@ -65,70 +106,86 @@ class Landing extends Component {
                 <div className="row">
                     <div className="col-md-6 col-md-offset-3">
                         <div className="panel panel-login">
-                            <div className="panel-body">
-                                <div className="row">
-                                    <div className="col-lg-12">
-                                        <form id="login-form" onSubmit={this.onSubmitLoginAttempt} action="#" method="post" style={{ display: "block" }}>
-                                            <img src={newlogo} rel="preload" alt="Ambrosia" className="center" />
-                                            <h2>LOGIN</h2>
-
-                                            <TextFieldGroup name="email" placeholder="Email" value={this.state.email} onChange={this.onChange} error={errors.email} />
-
-                                            {/* <div className="form-group">
-                                                <input type="text" name="username" id="username" tabIndex="1" className="form-control" placeholder="Email" />
-                                            </div> */}
-                                            <TextFieldGroup name="password"
-                                                type="password"
-                                                placeholder="Password"
-                                                value={this.state.password}
-                                                onChange={this.onChange} error={errors.password} />
-                                            {/* <div className="form-group">
-                                                <input type="password" name="password" id="password" tabIndex="2" className="form-control" placeholder="Password" />
-                                            </div> */}
-                                            <div className="col-xs-6 form-group pull-left checkbox">
-                                                <input id="checkbox1" type="checkbox" name="remember" />
-                                                <label htmlFor="checkbox1">Remember Me</label>
-                                            </div>
-                                            <div className="col-xs-6 form-group pull-right">
-                                                <input type="submit" tabIndex="4" className="form-control btn btn-login" value="Submit" />
-                                            </div>
-                                        </form>
-                                        {/* <form id="register-form" action="#" method="post" role="form" style={{ display: 'none' }}>
-                                            <h2>REGISTER</h2>
-                                            <div className="form-group">
-                                                <input type="text" name="username" id="username" tabIndex="1" className="form-control" placeholder="Username" value="" />
-                                            </div>
-                                            <div className="form-group">
-                                                <input type="email" name="email" id="email" tabIndex="1" className="form-control" placeholder="Email Address" value="" />
-                                            </div>
-                                            <div className="form-group">
-                                                <input type="password" name="password" id="password" tabIndex="2" className="form-control" placeholder="Password" />
-                                            </div>
-                                            <div className="form-group">
-                                                <input type="password" name="confirm-password" id="confirm-password" tabIndex="2" className="form-control" placeholder="Confirm Password" />
-                                            </div>
-                                            <div className="form-group">
-                                                <div className="row">
-                                                    <div className="col-sm-6 col-sm-offset-3">
-                                                        <input type="submit" name="register-submit" id="register-submit" tabIndex="4" className="form-control btn btn-register" value="Register Now" />
-                                                    </div>
+                            <div id="login_form_body">
+                                <div className="panel-body">
+                                    <div className="row">
+                                        <div className="col-lg-12">
+                                            <form id="login-form" onSubmit={this.onSubmitLoginAttempt} action="#" style={{ display: "block" }}>
+                                                <img src={newlogo} rel="preload" alt="Ambrosia" className="center" />
+                                                <h2>LOGIN</h2>
+                                                <TextFieldGroup name="email" placeholder="Email" value={this.state.email} onChange={this.onChange} error={errors.email} />
+                                                <TextFieldGroup name="password"
+                                                    type="password"
+                                                    placeholder="Password"
+                                                    value={this.state.password}
+                                                    onChange={this.onChange} error={errors.password} />
+                                                {/* <div className="col-xs-6 form-group pull-left checkbox">
+                                                    <input id="checkbox1" type="checkbox" name="remember" />
+                                                    <label htmlFor="checkbox1">Remember Me</label>
+                                                </div> */}
+                                                <div className="col-xs-6 form-group pull-right">
+                                                    <input type="submit" tabIndex="4" className="form-control btn btn-login" value="Submit" />
                                                 </div>
-                                            </div>
-                                        </form> */}
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {/*TODO: REGISTRATION TOGGLE ON A OFF */}
+                            <div id="registration_form_body" style={{ display: "none" }}>
+
+                                <div className="panel-body">
+                                    <div className="row">
+                                        <div className="col-lg-12">
+                                            <form id="register-form" onSubmit={this.onSubmitRegistrationAttempt} rel="preload" action="#" style={{ display: "block" }}>
+                                                <img src={newlogo} rel="preload" alt="Ambrosia" className="center" />
+                                                <h2>REGISTER</h2>
+                                                <TextFieldGroup name="first_name"
+                                                    type="text"
+                                                    placeholder="First Name"
+                                                    value={this.state.first_name}
+                                                    onChange={this.onChange}
+                                                    error={errors.first_name} />
+                                                <TextFieldGroup name="last_name"
+                                                    type="text"
+                                                    placeholder="Last Name"
+                                                    value={this.state.last_name}
+                                                    onChange={this.onChange}
+                                                    error={errors.last_name} />
+                                                <TextFieldGroup name="email"
+                                                    type="text"
+                                                    placeholder="Email"
+                                                    value={this.state.email}
+                                                    onChange={this.onChange}
+                                                    error={errors.email} />
+                                                <TextFieldGroup name="password"
+                                                    type="password"
+                                                    placeholder="Create Password"
+                                                    value={this.state.password}
+                                                    onChange={this.onChange}
+                                                    error={errors.password} />
+                                                <TextFieldGroup name="confirm_password"
+                                                    type="password"
+                                                    placeholder="Confirm Password"
+                                                    value={this.state.confirm_password}
+                                                    onChange={this.onChange}
+                                                    error={errors.confirm_password} />
+                                                <div className="col-xs-6 form-group pull-right">
+                                                    <input type="submit" name="register-submit" id="register-submit" className="form-control btn btn-login" value="Submit" />
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <div className="panel-heading">
                                 <div className="row">
-                                    <div className="col-xs-6 tabs btn disabled">
-                                        <Link to="/" className="" id="login-form-link">
-                                            <div className="login">LOGIN</div>
-                                        </Link>
+                                    <div id="login_button" className="col-xs-6 tabs btn disabled">
+                                        <div onClick={this.showLoginForm}
+                                            className="login">LOGIN</div>
                                     </div>
-                                    <div className="col-xs-6 tabs btn">
-                                        <Link to="/" id="register-form-link">
-                                            <div className="register">REGISTER</div>
-                                        </Link>
+                                    <div id="register_button" className="col-xs-6 tabs btn">
+                                        <div className="register" onClick={this.showRegistraionForm}>REGISTER</div>
                                     </div>
                                 </div>
                             </div>
@@ -143,7 +200,8 @@ class Landing extends Component {
 Landing.propTypes = {
     auth: PropTypes.object.isRequired,
     loginUser: PropTypes.func.isRequired,
-    errors: PropTypes.object.isRequired
+    errors: PropTypes.object.isRequired,
+    registerUser: PropTypes.func.isRequired,
 }
 
 const mapStateToProps = (state) => ({
@@ -151,4 +209,4 @@ const mapStateToProps = (state) => ({
     errors: state.errors
 });
 
-export default connect(mapStateToProps, { loginUser })(Landing);
+export default connect(mapStateToProps, { loginUser, registerUser })(Landing);
