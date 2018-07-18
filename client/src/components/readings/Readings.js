@@ -28,33 +28,28 @@ class Readings extends Component {
 
         let readingsContent;
 
-        if (loading) {
-            readingsContent = <Spinner />;
-        }
-        else {
-            // Check if logged in user has any reading data
-            if (readings === null) {
-                readingsContent = (
-                    <div >
-                        <div className="lead text-muted text-center">
-                            <h4>Welcome {user.name}</h4>
-                            <p>You have no recent readings, please connect device to app and check back here.</p>
-                        </div>
+        // Check if logged in user has any reading data
+        if (readings === null) {
+            readingsContent = (
+                <div >
+                    <div className="lead text-muted text-center">
+                        <h4>Welcome {user.name}</h4>
+                        <p>You have no recent readings, please connect device to app and check back here.</p>
                     </div>
-                )
-            } else {
-                // var rows = {}
-                // for (var x = 0; x < readings.length; ++x) {
+                </div>
+            )
+        } else {
+            // var rows = {}
+            // for (var x = 0; x < readings.length; ++x) {
 
-                // }
-                // console.log(rows)
-                // User is logged in but has no readings
-                readingsContent = (
-                    <div>
+            // }
+            // console.log(rows)
+            // User is logged in but has no readings
+            readingsContent = (
+                <div>
 
-                    </div>
-                )
-            }
+                </div>
+            )
         }
 
         return (

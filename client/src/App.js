@@ -15,9 +15,10 @@ import store from './store';
 
 import Landing from './components/layout/Landing';
 import Readings from './components/readings/Readings';
-
+import Spinner from './components/common/Spinner';
 import './App.css';
 import { clearCurrentProfile } from './actions/readingsActions';
+import Navbar from './components/layout/Navbar';
 
 // Check for token
 if (localStorage.jwtToken) {
@@ -41,6 +42,7 @@ if (localStorage.jwtToken) {
   }
 }
 
+
 // const NoMatch = ({ location }) => {
 //   return (
 //     <div>
@@ -49,21 +51,32 @@ if (localStorage.jwtToken) {
 //   )
 // }
 class App extends Component {
+  state = {
+    isLoading: true
+  };
+  componentDidMount() {
+    this.setState({ isLoading: false })
+  }
+  renderHTML = (
+    <div className="container">
+      <Navbar />
+      <Switch>
+        <Route exact path="/" component={Landing} />
+        {/* <Route exact path="/register" component={Register} /> */}
+        {/* <Route exact path="/login" component={Login} /> */}
+        <Route exact path="/readings" component={Readings} />
+        <Route exact path="*" component={Landing} />
+      </Switch>
+    </div>
+  )
+  mount
   render() {
 
     return (
       <Provider store={store}>
         <Router>
           <div className="App">
-            <div className="container">
-              <Switch>
-                <Route exact path="/" component={Landing} />
-                {/* <Route exact path="/register" component={Register} /> */}
-                {/* <Route exact path="/login" component={Login} /> */}
-                <Route exact path="/readings" component={Readings} />
-                <Route exact path="*" component={Landing} />
-              </Switch>
-            </div>
+            {this.state.isLoading ? <Spinner /> : this.renderHTML}
           </div>
         </Router>
       </Provider>
