@@ -62,7 +62,7 @@ class Readings extends Component {
                 <div className="container">
                     <div className="row">
                         <div className="col-md-12">
-                            <h1 className="display-4 text-center">Readings</h1>
+                            <h1 className="display-4 text-center">Glucose Readings</h1>
                             {readingsContent}
                         </div>
                     </div>

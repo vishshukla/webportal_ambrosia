@@ -69,7 +69,7 @@ class Landing extends Component {
         $(".se-pre-con").fadeIn("fast");
         $(".se-pre-con").fadeOut("slow");
         setTimeout(() => {
-            window.location.reload()
+            // window.location.reload()
             // this.setState({});
             let login_button = document.getElementById("login_button");
             let regForm = document.getElementById("registration_form_body");
@@ -81,6 +81,7 @@ class Landing extends Component {
             login_button.classList.add('disabled');
             reg_button.classList.remove('disabled');
         }, 200)
+        // window.location.reload()
 
     }
     showRegistraionForm() {
