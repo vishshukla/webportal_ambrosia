@@ -2,14 +2,15 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { getCurrentReadings } from '../../actions/readingsActions';
-import Spinner from '../common/Spinner';
+import ReadingRow from './row/ReadingRow';
+import './styles/Readings.css';
+// import ReadingRow from './row/ReadingRow';
+// import Spinner from '../common/Spinner';
 
 class Readings extends Component {
 
     componentDidMount() {
         this.props.getCurrentReadings();
-
-
         if (!this.props.auth.isAuthenticated) {
             this.props.history.push('/');
         }
@@ -20,16 +21,15 @@ class Readings extends Component {
     //         this.props.history.push('/');
     //     }
     // }
+
     render() {
-
-
         const { user } = this.props.auth;
-        const { readings, loading } = this.props.readings;
+        const { readings } = this.props.readings;
 
         let readingsContent;
 
         // Check if logged in user has any reading data
-        if (readings === null) {
+        if (readings === null || readings === {}) {
             readingsContent = (
                 <div >
                     <div className="lead text-muted text-center">
@@ -39,29 +39,62 @@ class Readings extends Component {
                 </div>
             )
         } else {
-            // var rows = {}
-            // for (var x = 0; x < readings.length; ++x) {
-
-            // }
-            // console.log(rows)
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+            var temp = []
+            var times = []
+            var level = []
+            var rows = []
+            var index = 0
+            for (var i in readings) {
+                for (var j in readings[i]) {
+                    // <ReadingRow />
+                    temp.push(readings[i][j])
+                }
+                level.push(temp[0])
+                times.push(temp[1])
+                //TODO: FORMAT TIMING
+                var date = new Date(temp[1] - 1000)
+                var month = monthNames[date.getMonth()].substr(0, 3)
+                var day = date.getDay();
+                var time = date.getHours() + ":" + date.getMinutes();
+                rows.push(<ReadingRow reading_level={temp[0]} reading_time={month + " " + day + " " + time} />)
+                index++;
+                temp = []
+            }
+            //find smallest
+            var smallestIndex = -1;
+            for (var x = 0; x < times.length; ++x) {
+                if (x === -1) {
+                    smallestIndex = x;
+                }
+            }
+            if (smallestIndex === -1) {
+                //no smallest was found
+            }
+            console.log(rows)
             // User is logged in but has no readings
             readingsContent = (
                 <div>
-
+                    <h2 className="text-center">Most Recent: {level[0]}</h2>
+                    <table className="table-resp">
+                        <tbody>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Level</th>
+                            </tr>
+                            {rows}
+                        </tbody>
+                    </table>
                 </div>
             )
         }
 
         return (
-            <div className="readings" >
-                <div className="container">
-                    <div className="row">
-                        <div className="col-md-12">
-                            <h1 className="display-4 text-center">Glucose Readings</h1>
-                            {readingsContent}
-                        </div>
-                    </div>
-                </div>
+            <div className="" >
+                <caption><b>Glucose Readings</b></caption>
+                {readingsContent}
             </div>
         )
     }

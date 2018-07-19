@@ -17,10 +17,7 @@ class Navbar extends Component {
     //     this.props.auth.isAuthenticated;
     // }
     componentDidMount() {
-        if (!this.props.auth.isAuthenticated) {
-            return null;
-        }
-
+        return this.props.auth.isAuthenticated;
     }
 
     render() {
@@ -42,7 +39,7 @@ class Navbar extends Component {
 
         return (
             <div>
-                {authLinks}
+                {this.props.auth.isAuthenticated ? authLinks : ""}
             </div>
         )
     }

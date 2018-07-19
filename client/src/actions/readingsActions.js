@@ -15,7 +15,7 @@ export const getCurrentReadings = () => dispatch => {
             });
         })
         .catch(
-            // < Redirect to='/login' />
+            // window.location.reload()
         );
 }
 

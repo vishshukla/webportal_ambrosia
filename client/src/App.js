@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import './App.css';
+
 import {
   BrowserRouter as Router,
   Route,
@@ -16,7 +18,6 @@ import store from './store';
 import Landing from './components/layout/Landing';
 import Readings from './components/readings/Readings';
 import Spinner from './components/common/Spinner';
-import './App.css';
 import { clearCurrentProfile } from './actions/readingsActions';
 import Navbar from './components/layout/Navbar';
 

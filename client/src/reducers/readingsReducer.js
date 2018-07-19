@@ -21,7 +21,7 @@ export default function (state = initialState, action) {
         case CLEAR_CURRENT_PROFILE:
             return {
                 ...state,
-                readings: {}
+                profile: {}
             }
         default:
             return state;

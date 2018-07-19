@@ -1,0 +1,62 @@
+.body {
+    color: black;
+}
+.table-resp {
+    border-collapse: collapse;
+    margin-left: 1em;
+  }
+  .table-resp caption {
+    text-align: left;
+    width: 95vw;
+  }
+  
+  @media (min-width: 768px) {
+    .table-resp {
+      margin-top: 3em;
+      position: relative;
+    }
+    .table-resp caption {
+      position: absolute;
+      top: -2em;
+      margin-bottom: 0.75em;
+    }
+    .table-resp thead {
+      text-align: left;
+      background-color: #333;
+      color: white;
+    }
+    .table-resp td, .table-resp th {
+      padding: 0.25em 0.5em;
+    }
+    .table-resp td:nth-child(2), .table-resp th:nth-child(2) {
+      border-left: 3px solid #fff;
+    }
+  }
+  @media (max-width: 767px) {
+    thead {
+      display: none;
+    }
+  
+    .table-resp {
+      display: block;
+      margin-top: 1em;
+    }
+  
+    td {
+      display: block;
+    }
+  
+    td:first-child {
+      font-weight: 700;
+      margin-top: 0.75em;
+      margin-bottom: 0;
+    }
+  
+    td:nth-child(2) {
+      margin-top: 0;
+    }
+  }
+  /* Uninteresting stuff below here */
+  html {
+    font: 18px "Iowan Old Style", serif;
+  }
