@@ -49,7 +49,7 @@ class Landing extends Component {
             email: this.state.email,
             password: this.state.password,
         }
-
+        this.props.history.push('/readings');
         this.props.loginUser(userData);
     }
 
@@ -120,10 +120,6 @@ class Landing extends Component {
                                                     placeholder="Password"
                                                     value={this.state.password}
                                                     onChange={this.onChange} error={errors.password} />
-                                                {/* <div className="col-xs-6 form-group pull-left checkbox">
-                                                    <input id="checkbox1" type="checkbox" name="remember" />
-                                                    <label htmlFor="checkbox1">Remember Me</label>
-                                                </div> */}
                                                 <div className="col-xs-6 form-group pull-right">
                                                     <input type="submit" tabIndex="4" className="form-control btn btn-login" value="Submit" />
                                                 </div>
@@ -132,7 +128,6 @@ class Landing extends Component {
                                     </div>
                                 </div>
                             </div>
-                            {/*TODO: REGISTRATION TOGGLE ON A OFF */}
                             <div id="registration_form_body" style={{ display: "none" }}>
 
                                 <div className="panel-body">

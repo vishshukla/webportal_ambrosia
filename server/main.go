@@ -72,7 +72,6 @@ type Reading struct {
 }
 
 type Notes struct {
-	
 }
 
 //	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS
@@ -237,23 +236,23 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func getNotesByID(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var (
+// func getNotesByID(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/json")
+// 	var (
 
-	)
-	token, err := parseToken(w,r)
-	id := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"]
-	if err != nil {
-		m := Message{"Message", "Unauthorized Link"}
-		payload, _ := json.Marshal(m)
-		w.Write(payload)
-		return
-	}
-	rows, err := db.Query("")
+// 	)
+// 	token, err := parseToken(w,r)
+// 	id := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"]
+// 	if err != nil {
+// 		m := Message{"Message", "Unauthorized Link"}
+// 		payload, _ := json.Marshal(m)
+// 		w.Write(payload)
+// 		return
+// 	}
+// 	rows, err := db.Query("")
 
-)
-}
+// )
+// }
 
 func getReadingsByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -269,7 +268,7 @@ func getReadingsByID(w http.ResponseWriter, r *http.Request) {
 		w.Write(payload)
 		return
 	}
-	rows, err := db.Query("SELECT reading , reading_time FROM app_device_readings WHERE user_id = ?", id)
+	rows, err := db.Query("SELECT reading , reading_time FROM app_device_readings WHERE user_id = ? ORDER BY reading_time DESC", id)
 	if err != nil {
 		fmt.Print(err.Error())
 	}
@@ -668,7 +667,7 @@ func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.H
 
 func main() {
 	// createTable() //<-- already created table
-	
+
 	if err != nil {
 		fmt.Print(err.Error())
 	}

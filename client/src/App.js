@@ -15,6 +15,9 @@ import { setCurrentUser, logoutUser } from './actions/authActions';
 import { Provider } from "react-redux";
 import store from './store';
 
+import PrivateRoute from './components/common/PrivateRoute';
+import EditProfile from './components/edit-profile/EditProfile';
+
 import Landing from './components/layout/Landing';
 import Readings from './components/readings/Readings';
 import Spinner from './components/common/Spinner';
@@ -65,12 +68,13 @@ class App extends Component {
         <Route exact path="/" component={Landing} />
         {/* <Route exact path="/register" component={Register} /> */}
         {/* <Route exact path="/login" component={Login} /> */}
-        <Route exact path="/readings" component={Readings} />
+        <PrivateRoute exact path="/readings" component={Readings} />
+        <PrivateRoute exact path="/edit-profile" component={EditProfile} />
         <Route exact path="*" component={Landing} />
+        {/* <Route exact path='/notes' component={Notes}> */}
       </Switch>
     </div>
   )
-  mount
   render() {
 
     return (
