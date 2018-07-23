@@ -1,3 +1,4 @@
+//TODO: 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
@@ -30,7 +31,7 @@ class Readings extends Component {
 
         // Check if logged in user has any reading data
         if (readings === null || readings === {}) {
-            readingsContent = (
+            return (
                 <div >
                     <div className="lead text-muted text-center">
                         <h4>Welcome {user.name}</h4>
@@ -76,25 +77,84 @@ class Readings extends Component {
             console.log(rows)
             // User is logged in but has no readings
             readingsContent = (
-                <div>
-                    <h2 className="text-center">Most Recent: {level[0]}</h2>
-                    <table className="table-resp">
-                        <tbody>
-                            <tr>
-                                <th>Date/Time</th>
-                                <th>Level</th>
-                            </tr>
-                            {rows}
-                        </tbody>
-                    </table>
-                </div>
+
+                <tbody>
+                    {rows}
+                </tbody>
             )
         }
-
         return (
-            <div className="" >
-                <caption><b>Glucose Readings</b></caption>
-                {readingsContent}
+            <div className="text-center" >
+                {/* <caption><b>Glucose Readings</b></caption> */}
+                <h1><b>Glucose Readings</b></h1>
+                <h2 className="text-center">Most Recent: {level[level.length - 1]}</h2>
+                <table className="rtable">
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th>
+                            <th>Level</th>
+                        </tr>
+                    </thead>
+                    {rows}
+                    {/* <tr>
+                            <td>Chrome</td>
+                            <td>9,562</td>
+                            <td>68.81%</td>
+                            <td>7,895</td>
+                            <td>01:07</td>
+                        </tr>
+                        <tr>
+                            <td>Firefox</td>
+                            <td>2,403</td>
+                            <td>17.29%</td>
+                            <td>2,046</td>
+                            <td>00:59</td>
+                        </tr>
+                        <tr>
+                            <td>Safari</td>
+                            <td>1,089</td>
+                            <td>2.63%</td>
+                            <td>904</td>
+                            <td>00:59</td>
+                        </tr>
+                        <tr>
+                            <td>Internet Explorer</td>
+                            <td>366</td>
+                            <td>2.63%</td>
+                            <td>333</td>
+                            <td>01:01</td>
+                        </tr>
+                        <tr>
+                            <td>Safari (in-app)</td>
+                            <td>162</td>
+                            <td>1.17%</td>
+                            <td>112</td>
+                            <td>00:58</td>
+                        </tr>
+                        <tr>
+                            <td>Opera</td>
+                            <td>103</td>
+                            <td>0.74%</td>
+                            <td>87</td>
+                            <td>01:22</td>
+                        </tr>
+                        <tr>
+                            <td>Edge</td>
+                            <td>98</td>
+                            <td>0.71%</td>
+                            <td>69</td>
+                            <td>01:18</td>
+                        </tr>
+                        <tr>
+                            <td>Other</td>
+                            <td>275</td>
+                            <td>6.02%</td>
+                            <td>90</td>
+                            <td>N/A</td>
+                        </tr> */}
+                </table>
+
+
             </div>
         )
     }

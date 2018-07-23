@@ -5,7 +5,7 @@ const ReadingRow = ({
     reading_time
 }) => {
     return (
-        <tr className="">
+        <tr >
             <td>
                 {reading_time}
             </td>

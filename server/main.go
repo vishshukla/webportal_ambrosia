@@ -71,6 +71,10 @@ type Reading struct {
 	ReadingTime   string `bson:"reading_time" json:"reading_time" db:"reading_time"`
 }
 
+type Notes struct {
+	
+}
+
 //	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS
 // }
 
@@ -231,6 +235,24 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
 
+}
+
+func getNotesByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var (
+
+	)
+	token, err := parseToken(w,r)
+	id := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"]
+	if err != nil {
+		m := Message{"Message", "Unauthorized Link"}
+		payload, _ := json.Marshal(m)
+		w.Write(payload)
+		return
+	}
+	rows, err := db.Query("")
+
+)
 }
 
 func getReadingsByID(w http.ResponseWriter, r *http.Request) {
@@ -646,7 +668,7 @@ func ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.H
 
 func main() {
 	// createTable() //<-- already created table
-
+	
 	if err != nil {
 		fmt.Print(err.Error())
 	}
