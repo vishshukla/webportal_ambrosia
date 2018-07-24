@@ -6,61 +6,48 @@ import TextAreaFieldGroup from '../common/TextAreaFieldGroup';
 import SelectListGroup from '../common/SelectListGroup';
 import axios from '../../../node_modules/axios';
 
-let userInfo = {
-    id: '',
-    user_type: '',
-    prefix: '',
-    first_name: '',
-    middle_name: '',
-    last_name: '',
-    suffix: '',
-    email: '',
-    ssn: '',
-    phone: '',
-    address: '',
-    zipcode: '',
-    city: '',
-    state: '',
-    country: '',
-}
+
 
 class EditProfile extends Component {
 
-    getInfo() {
-        axios.get('/api/user')
-            .then(res => {
-                console.log(res)
-            })
-            .catch(
-                // window.location.reload()
-            );
-    }
+
     constructor(props) {
-        this.getInfo()
         super(props);
-        var fullName = this.props.user.name;
-        var doesHaveMiddleName = false;
-        var firstandlast = fullName.split(' ');
-        if (firstandlast.length > 2) {
-            doesHaveMiddleName = true;
-        }
+        // var fullName = this.props.user.name;
+        // var doesHaveMiddleName = false;
+        // var firstandlast = fullName.split(' ');
+        // if (firstandlast.length > 2) {
+        //     doesHaveMiddleName = true;
+        // }
         this.state = {
-            user_type: '',
-            prefix: '',
-            first_name: firstandlast[0],
-            middle_name: doesHaveMiddleName ? firstandlast[1] : "",
-            last_name: doesHaveMiddleName ? firstandlast[2] : firstandlast[1],
-            suffix: '',
-            email: '',
-            ssn: '',
-            phone: '',
-            address: '',
-            zipcode: '',
-            city: '',
-            state: '',
-            country: '',
+            ID: '',
+            UserType: '',
+            Prefix: '',
+            FirstName: "",
+            MiddleName: "",
+            LastName: "",
+            Suffix: '',
+            Email: '',
+            Ssn: '',
+            Phone: '',
+            Address: '',
+            Zipcode: '',
+            City: '',
+            State: '',
+            Country: '',
+            CurrentPassword: '',
+            NewPassword: '',
+            ConfirmPassword: '',
             errors: {}
         }
+        axios.get('/api/user')
+            .then(res => {
+                for (let key in res.data) {
+                    if (res.data.hasOwnProperty(key)) {
+                        this.setState({ [key]: res.data[key] })
+                    }
+                }
+            });
 
         this.onChange = this.onChange.bind(this);
         this.onSubmit = this.onSubmit.bind(this);
@@ -77,6 +64,8 @@ class EditProfile extends Component {
     }
 
     render() {
+
+        // console.log(this.state)
         const { errors } = this.state;
 
         const accountTypes = [
@@ -89,6 +78,14 @@ class EditProfile extends Component {
             { label: 'Payer', value: 'payer' },
             { label: 'Developer', value: 'developer' },
         ];
+
+        const prefixes = [
+            { label: 'Prefix', value: '' },
+            { label: 'Mr.', value: 'Mr.' },
+            { label: 'Mrs.', value: 'Mrs.' },
+            { label: 'Dr.', value: 'Dr.' },
+        ]
+        console.log(this.state);
         return (
             <div className="edit-profile">
                 <div className="container">
@@ -101,47 +98,78 @@ class EditProfile extends Component {
                             <small className="d-block pb-3">* = required fields</small>
                             <form onSubmit={this.onSubmit}>
                                 <SelectListGroup
-                                    placeholder="Status"
-                                    name="user_type"
-                                    value={this.state.user_type}
-                                    onChange={this.state.onChange}
-                                    error={errors.handle}
+                                    name="UserType"
+                                    value={this.state.UserType}
+                                    onChange={this.onChange}
+                                    error={this.state.Errors}
                                     info="What type of account are you using"
                                     options={accountTypes}
                                 />
-                                <TextFieldGroup
-                                    placeholder="Prefix"
+                                <SelectListGroup
                                     onChange={this.onChange}
-                                    name="prefix"
-                                    error={errors.handle}
+                                    name="Prefix"
+                                    value={this.state.Prefix}
+                                    error={this.state.Errors}
+                                    options={prefixes}
                                 />
                                 <TextFieldGroup
                                     onChange={this.onChange}
-                                    value={this.state.first_name}
-                                    name="first_name"
-                                    error={errors.handle}
-                                    info="Update your first name"
+                                    value={this.state.FirstName}
+                                    name="FirstName"
+                                    error={this.state.Errors}
+                                    info="* Update your first name"
                                 />
                                 <TextFieldGroup
                                     onChange={this.onChange}
-                                    value={this.state.last_name}
-                                    name="last_name"
-                                    error={errors.handle}
-                                    info="Update your Last name"
+                                    value={this.state.LastName}
+                                    name="LastName"
+                                    error={this.state.Errors}
+                                    info="* Update your Last name"
                                 />
                                 <TextFieldGroup
                                     placeholder="Suffix"
                                     onChange={this.onChange}
-                                    value={this.state.suffix}
-                                    name="suffix"
-                                    error={errors.handle}
+                                    value={this.state.Suffix}
+                                    name="Suffix"
+                                    error={this.state.Errors}
                                 />
                                 <TextFieldGroup
                                     placeholder="Email"
                                     onChange={this.onChange}
-                                    value={this.state.email}
-                                    name="email"
-                                    error={errors.handle}
+                                    value={this.state.Email}
+                                    name="Email"
+                                    error={this.state.Errors}
+                                    info="We will send a confirmation email to this address"
+                                />
+                                <TextFieldGroup
+                                    type="password"
+                                    placeholder="* Old Password"
+                                    onChange={this.onChange}
+                                    value={this.state.CurrentPassword}
+                                    name="CurrentPassword"
+                                    error={this.state.Errors}
+                                />
+                                <TextFieldGroup
+                                    type="password"
+                                    placeholder="New Password"
+                                    onChange={this.onChange}
+                                    value={this.state.NewPassword}
+                                    name="NewPassword"
+                                    error={this.state.Errors}
+                                />
+                                <TextFieldGroup
+                                    placeholder="Social Security Number"
+                                    onChange={this.onChange}
+                                    value={this.state.Ssn}
+                                    name="Ssn"
+                                    error={this.state.Errors}
+                                />
+                                <TextFieldGroup
+                                    placeholder="Phone Number"
+                                    onChange={this.onChange}
+                                    value={this.state.Phone}
+                                    name="Phone"
+                                    error={this.state.Errors}
                                 />
                             </form>
                         </div>
