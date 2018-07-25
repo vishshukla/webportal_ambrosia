@@ -27,4 +27,4 @@ NodeJS
 
 ## Author
 
-* **Vishwas Shukla** - *Software Developer* - [vishshukla](https://github.com/vishshukla)
+* **Vishwas Shukla** - *Web Developer* - [vishshukla](https://github.com/vishshukla)
