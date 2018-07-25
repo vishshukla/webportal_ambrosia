@@ -23,6 +23,7 @@ import Readings from './components/readings/Readings';
 import Spinner from './components/common/Spinner';
 import { clearCurrentProfile } from './actions/readingsActions';
 import Navbar from './components/layout/Navbar';
+import History from './components/history/History';
 
 // Check for token
 if (localStorage.jwtToken) {
@@ -70,6 +71,7 @@ class App extends Component {
         {/* <Route exact path="/login" component={Login} /> */}
         <PrivateRoute exact path="/readings" component={Readings} />
         <PrivateRoute exact path="/edit-profile" component={EditProfile} />
+        <PrivateRoute exact path="/history" component={History} />
         <Route exact path="*" component={Landing} />
         {/* <Route exact path='/notes' component={Notes}> */}
       </Switch>

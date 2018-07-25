@@ -23,7 +23,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var db, err = sql.Open("mysql", "testuser:password@tcp(127.0.0.1:3306)/test")
+var db, err = sql.Open("mysql", keys.Db)
 
 //SecretKey is a global variable used to add 'password' to all the JWT
 var SecretKey = keys.Secret
@@ -72,6 +72,7 @@ type Reading struct {
 }
 
 type Notes struct {
+	// Body string `bson:""`
 }
 
 //	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS
@@ -239,7 +240,7 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 // func getNotesByID(w http.ResponseWriter, r *http.Request) {
 // 	w.Header().Set("Content-Type", "application/json")
 // 	var (
-
+// 		notes Notes
 // 	)
 // 	token, err := parseToken(w,r)
 // 	id := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"]

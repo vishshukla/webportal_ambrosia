@@ -42,6 +42,11 @@ class Navbar extends Component {
         const authLinks = (
             <ul style={styles} className="navbar-nav ml-auto">
                 <li className="nav-item" style={liStyles}>
+                    <a href="/history" className="nav-link">
+                        {' '} History
+                    </a>
+                </li>
+                <li className="nav-item" style={liStyles}>
                     <a href="/readings" className="nav-link">
                         {' '} Readings
                     </a>
