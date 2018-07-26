@@ -23,7 +23,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var db, err = sql.Open("mysql", keys.Db)
+var db, err = sql.Open("mysqli", keys.ProdDb)
 
 //SecretKey is a global variable used to add 'password' to all the JWT
 var SecretKey = keys.Secret
