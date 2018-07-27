@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import PropTypes from 'prop-types';
 import TextFieldGroup from '../common/TextFieldGroup';
-import TextAreaFieldGroup from '../common/TextAreaFieldGroup';
+// import TextAreaFieldGroup from '../common/TextAreaFieldGroup';
 import SelectListGroup from '../common/SelectListGroup';
 import axios from '../../../node_modules/axios';
 
@@ -66,7 +66,7 @@ class EditProfile extends Component {
     render() {
 
         // console.log(this.state)
-        const { errors } = this.state;
+        // const { errors } = this.state;
 
         const accountTypes = [
             { label: 'Update Account Type', value: '' },

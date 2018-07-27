@@ -16,14 +16,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 
-	keys "github.com/vishshukla/webportal_ambrosia/server/config"
+	keys "github.com/vishshukla/platform/server/config"
 
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var db, err = sql.Open("mysqli", keys.ProdDb)
+var db, err = sql.Open("mysql", keys.ProdDb)
 
 //SecretKey is a global variable used to add 'password' to all the JWT
 var SecretKey = keys.Secret

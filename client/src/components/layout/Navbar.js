@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
 import { logoutUser } from '../../actions/authActions';
 import { PropTypes } from 'prop-types';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { clearCurrentProfile } from '../../actions/readingsActions';
-import EditProfile from '../edit-profile/EditProfile';
+// import EditProfile from '../edit-profile/EditProfile';
 // import './styles/Navbar.css';
 
 const styles = {
@@ -17,9 +17,9 @@ const liStyles = {
     padding: "0 5px",
 
 }
-const goToEditProfile = () => {
+// const goToEditProfile = () => {
 
-}
+// }
 
 class Navbar extends Component {
     onLogoutClick(e) {
