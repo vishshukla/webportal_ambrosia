@@ -16,14 +16,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 
-	keys "github.com/vishshukla/platform/server/config"
+	keys "github.com/vishshukla/webportal_ambrosia/server/config"
 
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var db, err = sql.Open("mysql", keys.ProdDb)
+var db, err = sql.Open("mysql", keys.Db)
 
 //SecretKey is a global variable used to add 'password' to all the JWT
 var SecretKey = keys.Secret
@@ -71,8 +71,25 @@ type Reading struct {
 	ReadingTime   string `bson:"reading_time" json:"reading_time" db:"reading_time"`
 }
 
-type Notes struct {
-	// Body string `bson:""`
+type UpdateUserTemp struct {
+	ID              string
+	UserType        string
+	Prefix          string
+	FirstName       string
+	MiddleName      string
+	LastName        string
+	Suffix          string
+	Email           string
+	Ssn             string
+	Phone           string
+	Address         string
+	Zipcode         string
+	City            string
+	State           string
+	Country         string
+	CurrentPassword string
+	NewPassword     string
+	ConfirmPassword string
 }
 
 //	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS	END OF STRUCTS
@@ -330,7 +347,7 @@ func doesEmailExist(email string) bool {
 //@POST
 //TODO- FIX r.FormValue
 func createUser(w http.ResponseWriter, r *http.Request) {
-	var user tempNewUser
+	var user tempNewUser //this is created because I need an object to fill the req with...
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(&user)
 	var everythingOkay = true
@@ -348,25 +365,9 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	if err := r.Body.Close(); err != nil {
 		panic(err)
 	}
-	// if err := json.Unmarshal(body, &user); err != nil {
-	// 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	// 	w.WriteHeader(422) // unprocessable entity
-	// 	if err := json.NewEncoder(w).Encode(err); err != nil {
-	// 		panic(err)
-	// 	}
-	// }
-	// Put the body back for FormatRequest to read it
 
-	// Put it back before you call client.Do()
 	w.Header().Set("Content-Type", "application/json")
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusBadGateway)
-	// 	return
-	// }
-	// for key, values := range r.PostForm {
-	// 	fmt.Printf(key, values)
-	// }
-	// logic part of log in
+
 	// UserType := r.FormValue("user_type")
 	// Prefix := r.FormValue("prefix")
 	// FirstName := r.FormValue("first_name")
@@ -523,93 +524,149 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 //TODO: Need to add verification to new email before setting new email
 func updateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	token, err := parseToken(w, r)
+	// token, err := parseToken(w, r)
+	// id := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"])
 	if err != nil {
 		m := Message{"message", "Unauthorized Route!"}
 		payload, _ := json.Marshal(m)
 		w.Write(payload)
 		return
 	}
-	ID := fmt.Sprint(token.Claims.(jwt.MapClaims)["id"])
-	UserType := r.FormValue("user_type")
-	Prefix := r.FormValue("prefix")
-	FirstName := r.FormValue("first_name")
-	MiddleName := r.FormValue("middle_name")
-	NewPassword := r.FormValue("new_password")
-	CurrentPassword := r.FormValue("current_password")
-	LastName := r.FormValue("last_name")
-	Suffix := r.FormValue("suffix")
-	Email := r.FormValue("email")
-	Ssn := r.FormValue("ssn")
-	Phone := r.FormValue("phone")
-	Address := r.FormValue("address")
-	Zipcode := r.FormValue("zipcode")
-	City := r.FormValue("city")
-	State := r.FormValue("state")
-	Country := r.FormValue("country")
-	json := simplejson.New()
-	var oldEmail string
-	db.QueryRow("SELECT email FROM user WHERE ID=?", ID).Scan(&oldEmail)
 
-	if Email == "" || CurrentPassword == "" || FirstName == "" || LastName == "" || Address == "" || Country == "" {
-		json.Set("message", "Please fill in all the required fields")
+	var everythingOkay = true
+	// error := simplejson.New()
+	// error.Set("email", "needs to be valid")
+	// payload, _ := error.MarshalJSON()
+	// w.Write(payload)
+	// w.WriteHeader(http.StatusBadRequest)
+
+	if err := r.Body.Close(); err != nil {
+		panic(err)
+	}
+
+	var user UpdateUserTemp
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(&user)
+	fmt.Printf(user.Address)
+	json := simplejson.New()
+
+	if user.Email == "" {
+		json.Set("Email", "Enter email")
+		everythingOkay = false
+	}
+	if user.FirstName == "" {
+		json.Set("FirstName", "Enter first name")
+		everythingOkay = false
+	}
+	if user.LastName == "" {
+		everythingOkay = false
+		json.Set("LastName", "Enter last name")
+	}
+	if user.CurrentPassword == "" {
+		everythingOkay = false
+		json.Set("CurrentPassword", "Enter password")
+	}
+	// if user.ConfirmPassword == "" {
+	// 	everythingOkay = false
+	// 	json.Set("confirm_password", "Confirm Password field is required")
+	// }
+
+	if !everythingOkay {
 		payload, _ := json.MarshalJSON()
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Print("TEST")
 		w.Write(payload)
 		return
 	}
+	err = emailx.Validate(user.Email)
+	if err != nil {
+		everythingOkay = false
+		json.Set("email", "Please enter a valid email.")
+		// payload, _ := json.MarshalJSON()
+		// w.Header().Set("Content-Type", "application/json")
+		// w.WriteHeader(http.StatusBadRequest)
+		// w.Write(payload)
+	}
 
-	if !passwordMatch(oldEmail, CurrentPassword) {
+	//If email already exists
+	if doesEmailExist(user.Email) {
+		everythingOkay = false
+		json.Set("email", "An account with this email already exists.")
+	}
+	if len(user.NewPassword) < 6 || len(user.NewPassword) > 20 {
+		everythingOkay = false
+		json.Set("password", "Use 6 character or more for your password.")
+	}
+
+	if user.CurrentPassword != user.ConfirmPassword {
+		everythingOkay = false
+		json.Set("confirm_password", "Passwords must match")
+	}
+
+	if !everythingOkay {
+		payload, err := json.MarshalJSON()
+		if err != nil {
+			w.Write([]byte("Something went wrong..."))
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(payload)
+		}
+		return
+	}
+
+	if !passwordMatch(user.Email, user.CurrentPassword) {
 		json.Set("message", "Current password doesn't match")
 		payload, _ := json.MarshalJSON()
 		w.Write(payload)
 		return
 	}
 	//if they are changing their password
-	if NewPassword != "" {
-		var HashedPassword []byte
-		if len(NewPassword) < 6 || len(NewPassword) > 20 {
-			json.Set("message", "Password must be between 6-20 characters")
-			return
-		}
+	// if NewPassword != "" {
+	// 	var HashedPassword []byte
+	// 	if len(NewPassword) < 6 || len(NewPassword) > 20 {
+	// 		json.Set("message", "Password must be between 6-20 characters")
+	// 		return
+	// 	}
 
-		HashedPassword, err = bcrypt.GenerateFromPassword([]byte(NewPassword), bcrypt.DefaultCost)
-		if err != nil {
-			panic(err)
-		}
+	// 	HashedPassword, err = bcrypt.GenerateFromPassword([]byte(NewPassword), bcrypt.DefaultCost)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
 
-		//To check if the user actually inserted a different password
-		if passwordMatch(oldEmail, NewPassword) {
-			json.Set("message", "Choose a password you haven't used before!")
-			payload, _ := json.MarshalJSON()
-			w.Write(payload)
-			return
-		}
-		stmt, err := db.Prepare("update user set user_type=?, prefix=?,first_name=?,middle_name=?,last_name=?,suffix=?, password=?,email=?,ssn=?,phone=?,address=?,zipcode=?,city=?,state=?,country=? WHERE id=?; ")
-		if err != nil {
-			fmt.Print(err.Error())
-		}
+	// 	//To check if the user actually inserted a different password
+	// 	if passwordMatch(oldEmail, NewPassword) {
+	// 		json.Set("message", "Choose a password you haven't used before!")
+	// 		payload, _ := json.MarshalJSON()
+	// 		w.Write(payload)
+	// 		return
+	// 	}
+	// 	stmt, err := db.Prepare("update user set user_type=?, prefix=?,first_name=?,middle_name=?,last_name=?,suffix=?, password=?,email=?,ssn=?,phone=?,address=?,zipcode=?,city=?,state=?,country=? WHERE id=?; ")
+	// 	if err != nil {
+	// 		fmt.Print(err.Error())
+	// 	}
 
-		_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, string(HashedPassword), Email, Ssn, Phone, Address, Zipcode, City, State, Country, ID)
-		if err != nil {
-			fmt.Print(err.Error())
-		}
+	// 	_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, string(HashedPassword), Email, Ssn, Phone, Address, Zipcode, City, State, Country, ID)
+	// 	if err != nil {
+	// 		fmt.Print(err.Error())
+	// 	}
 
-		defer stmt.Close()
-	} else {
-		stmt, err := db.Prepare("update user set user_type=?, prefix=?,first_name=?,middle_name=?,last_name=?,suffix=?,email=?,ssn=?,phone=?,address=?,zipcode=?,city=?,state=?,country=? WHERE id=?; ")
-		if err != nil {
-			fmt.Print(err.Error())
-		}
+	// 	defer stmt.Close()
+	// } else {
+	// 	stmt, err := db.Prepare("update user set user_type=?, prefix=?,first_name=?,middle_name=?,last_name=?,suffix=?,email=?,ssn=?,phone=?,address=?,zipcode=?,city=?,state=?,country=? WHERE id=?; ")
+	// 	if err != nil {
+	// 		fmt.Print(err.Error())
+	// 	}
 
-		_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, Email, Ssn, Phone, Address, Zipcode, City, State, Country, ID)
-		if err != nil {
-			fmt.Print(err.Error())
-		}
+	// 	_, err = stmt.Exec(UserType, Prefix, FirstName, MiddleName, LastName, Suffix, Email, Ssn, Phone, Address, Zipcode, City, State, Country, ID)
+	// 	if err != nil {
+	// 		fmt.Print(err.Error())
+	// 	}
 
-		defer stmt.Close()
-	}
+	// 	defer stmt.Close()
+	// }
 
-	json.Set("message", "Successfully updated "+FirstName+" "+LastName)
+	// json.Set("message", "Successfully updated "+FirstName+" "+LastName)
 	payload, _ := json.MarshalJSON()
 	w.Write(payload)
 }
