@@ -1,3 +1,4 @@
+// CURRENTLY WORKING ON THIS - VISHWAS 
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import PropTypes from 'prop-types';
@@ -23,9 +24,9 @@ class EditProfile extends Component {
             ID: '',
             UserType: '',
             Prefix: '',
-            FirstName: "",
-            MiddleName: "",
-            LastName: "",
+            FirstName: '',
+            MiddleName: '',
+            LastName: '',
             Suffix: '',
             Email: '',
             Ssn: '',
@@ -59,8 +60,34 @@ class EditProfile extends Component {
     }
 
     onSubmit(e) {
+        //temp (MAKE ACTION)
+        const userData = {
+            ID: this.state.ID,
+            UserType: this.state.UserType,
+            Prefix: this.state.Prefix,
+            FirstName: this.state.FirstName,
+            MiddleName: this.state.MiddleName,
+            LastName: this.state.LastName,
+            Suffix: this.state.Suffix,
+            Email: this.state.Email,
+            Ssn: this.state.Ssn,
+            Phone: this.state.Phone,
+            Address: this.state.Address,
+            Zipcode: this.state.Zipcode,
+            City: this.state.City,
+            State: this.state.State,
+            Country: this.state.Country,
+            CurrentPassword: this.state.CurrentPassword,
+            NewPassword: this.state.NewPassword,
+            ConfirmPassword: this.state.ConfirmPassword,
+        }
+        axios.put('/api/user', userData)
+            .then(res => console.log(res.data))
+            .catch(err => {
+                console.log(err.response.data)
+                this.setState({ errors: err.response.data })
+            })
         e.preventDefault();
-        console.log('submit')
     }
 
     render() {
@@ -85,7 +112,6 @@ class EditProfile extends Component {
             { label: 'Mrs.', value: 'Mrs.' },
             { label: 'Dr.', value: 'Dr.' },
         ]
-        console.log(this.state);
         return (
             <div className="edit-profile">
                 <div className="container">
@@ -171,6 +197,42 @@ class EditProfile extends Component {
                                     name="Phone"
                                     error={this.state.Errors}
                                 />
+                                <TextFieldGroup
+                                    placeholder="Addresss"
+                                    onChange={this.onChange}
+                                    value={this.state.Address}
+                                    name="Address"
+                                    error={this.state.Errors}
+                                />
+                                <TextFieldGroup
+                                    placeholder="Zipcode"
+                                    onChange={this.onChange}
+                                    value={this.state.Zipcode}
+                                    name="Zipcode"
+                                    error={this.state.Errors}
+                                />
+                                <TextFieldGroup
+                                    placeholder="City"
+                                    onChange={this.onChange}
+                                    value={this.state.City}
+                                    name="City"
+                                    error={this.state.Errors}
+                                />
+                                <TextFieldGroup
+                                    placeholder="State"
+                                    onChange={this.onChange}
+                                    value={this.state.State}
+                                    name="State"
+                                    error={this.state.Errors}
+                                />
+                                <TextFieldGroup
+                                    placeholder="Country"
+                                    onChange={this.onChange}
+                                    value={this.state.Country}
+                                    name="Country"
+                                    error={this.state.Errors}
+                                />
+                                <input type="submit" tabIndex="4" className="form-control btn btn-login" value="Submit" />
                             </form>
                         </div>
                     </div>
