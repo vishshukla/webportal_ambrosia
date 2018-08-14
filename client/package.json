@@ -2,10 +2,11 @@
   "name": "webportal_ambrosia",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://vishshukla.github.io/webportal_ambrosia",
+  "homepage": "http://www.ambrosia.care.php72-35.phx1-1.websitetestlink.com/",
   "dependencies": {
     "axios": "^0.18.0",
     "classnames": "^2.2.6",
+    "jquery": "^3.3.1",
     "jwt-decode": "^2.2.0",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
@@ -13,7 +14,9 @@
     "react-router-dom": "^4.3.1",
     "react-scripts": "1.1.4",
     "redux": "^4.0.0",
-    "redux-thunk": "^2.3.0"
+    "redux-devtools-extension": "^2.13.5",
+    "redux-thunk": "^2.3.0",
+    "webpack": "^3.11.0"
   },
   "proxy": "http://localhost:8000",
   "scripts": {
