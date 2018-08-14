@@ -2,7 +2,7 @@
 
 Project is currently under development during interning here at Ambrosia Systems. Currently, this portal will allow users to register, login, and view their readings.
 
-## To run locally
+## To run locally 
 
 The program is organized with client and server. To run this program locally, please have MySQL downloaded. Please uncomment createTable function from main.go to have the program create the proper table for you locally. To use reading functionality, please create the readings table with the same architecture 
 
