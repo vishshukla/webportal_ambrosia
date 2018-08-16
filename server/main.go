@@ -367,7 +367,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
 	// UserType := r.FormValue("user_type")
 	// Prefix := r.FormValue("prefix")
 	// FirstName := r.FormValue("first_name")
@@ -435,7 +434,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		everythingOkay = false
 		json.Set("password", "Use 6 character or more for your password.")
 	}
-
 	if user.Password != user.ConfirmPassword {
 		everythingOkay = false
 		json.Set("confirm_password", "Passwords must match")
