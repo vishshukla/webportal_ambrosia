@@ -7,7 +7,7 @@ import { GET_READINGS, READINGS_LOADING, CLEAR_CURRENT_PROFILE } from './types';
 // Get current profile
 export const getCurrentReadings = () => dispatch => {
     dispatch(setReadingLoading());
-    axios.get('/api/user/readings')
+    axios.get('http://122.170.0.55:7823/blucon/app-server/ios/')
         .then(res => {
             dispatch({
                 type: GET_READINGS,

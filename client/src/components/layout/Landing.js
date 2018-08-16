@@ -1,6 +1,7 @@
 //CURRENTLY WORKING ON THIS - VISHWAS
 
 import React, { Component } from 'react'
+import axios from 'axios';
 // import { Link } from 'react-router-dom'
 import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
@@ -52,7 +53,23 @@ class Landing extends Component {
             password: this.state.password,
         }
         this.props.history.push('/readings');
-        this.props.loginUser(userData);
+        // fetch('http://122.170.0.55:7823/blucon/app-server/ios/sign-in', {
+        //     method: 'POST',
+        //     body: JSON.stringify(userData)
+        // }).then(response => console.log(response.json()))
+        //     .catch(err => console.log(err))
+        $.ajax({
+            method: "POST",
+            url: "http://122.170.0.55:7823/blucon/app-server/ios/sign-in",
+            data: userData,
+            success: function (data) {
+                var DataJSON = JSON.parse(data);
+                localStorage.setItem("token", DataJSON.token);
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
     }
 
     onSubmitRegistrationAttempt(e) {

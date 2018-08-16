@@ -26,7 +26,7 @@ export const registerUser = (userData, history) => dispatch => {
 
 // Login - Get User Token
 export const loginUser = (userData) => dispatch => {
-    axios.put("/login", userData)
+    axios.put("http://122.170.0.55:7823/blucon/app-server/ios/sign-in", userData)
         .then(res => {
             //Save to localStorage
             const { token } = res.data;
