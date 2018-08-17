@@ -2,7 +2,7 @@
   "name": "webportal_ambrosia",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://www.ambrosia.care.php72-35.phx1-1.websitetestlink.com/",
+  "homepage": "http://www.ambrosia.care/",
   "dependencies": {
     "axios": "^0.18.0",
     "classnames": "^2.2.6",
