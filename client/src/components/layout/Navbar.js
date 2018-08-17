@@ -41,21 +41,21 @@ class Navbar extends Component {
     render() {
         const authLinks = (
             <ul style={styles} className="navbar-nav ml-auto">
-                <li className="nav-item" style={liStyles}>
+                {/* <li className="nav-item" style={liStyles}>
                     <a href="/history" className="nav-link">
                         {' '} History
                     </a>
-                </li>
+                </li> */}
                 <li className="nav-item" style={liStyles}>
                     <a href="/readings" className="nav-link">
                         {' '} Readings
                     </a>
                 </li>
-                <li className="nav-item" style={liStyles}>
+                {/* <li className="nav-item" style={liStyles}>
                     <a href="/edit-profile" className="nav-link">
                         {' '} Edit Profile
                     </a>
-                </li>
+                </li> */}
                 <li className="nav-item" style={liStyles}>
                     <a href="/login" onClick={this.onLogoutClick.bind(this)} className="nav-link">
                         Log out
@@ -66,7 +66,7 @@ class Navbar extends Component {
 
         return (
             <div>
-                {this.props.auth.isAuthenticated ? authLinks : ""}
+                {localStorage.getItem("token") !== null ? authLinks : ""}
             </div>
         )
     }

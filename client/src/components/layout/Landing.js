@@ -1,8 +1,6 @@
 //CURRENTLY WORKING ON THIS - VISHWAS
 
 import React, { Component } from 'react'
-import axios from 'axios';
-// import { Link } from 'react-router-dom'
 import { PropTypes } from 'prop-types';
 import { connect } from 'react-redux';
 import './styles/Landing.css';
@@ -10,7 +8,6 @@ import newlogo from './newlogo.png';
 import TextFieldGroup from '../common/TextFieldGroup';
 import { loginUser, registerUser } from '../../actions/authActions';
 import $ from 'jquery';
-// import Spinner from '../common/Spinner';
 class Landing extends Component {
     constructor(props) {
         super(props);
@@ -19,7 +16,10 @@ class Landing extends Component {
             last_name: '',
             email: '',
             password: '',
-            confirm_password: '',
+            // confirm_password: '',
+            dob: '',
+            phone1: '',
+            country: '',
             errors: {},
             isHidden: true,
         };
@@ -29,16 +29,13 @@ class Landing extends Component {
     }
 
     componentDidMount() {
-        if (this.props.auth.isAuthenticated) {
+        if (localStorage.getItem("token") !== null) {
             this.props.history.push('/readings');
         }
     }
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.auth.isAuthenticated) {
+    componentWillReceiveProps() {
+        if (localStorage.token) {
             window.location.reload();
-        }
-        if (nextProps.errors) {
-            this.setState({ errors: nextProps.errors });
         }
     }
     onChange(e) {
@@ -52,24 +49,28 @@ class Landing extends Component {
             email: this.state.email,
             password: this.state.password,
         }
-        this.props.history.push('/readings');
-        // fetch('http://122.170.0.55:7823/blucon/app-server/ios/sign-in', {
-        //     method: 'POST',
-        //     body: JSON.stringify(userData)
-        // }).then(response => console.log(response.json()))
-        //     .catch(err => console.log(err))
+        // this.props.history.push('/readings');
         $.ajax({
             method: "POST",
-            url: "http://122.170.0.55:7823/blucon/app-server/ios/sign-in",
+            url: "https://www.ambrosiasys.com/app-server/ios/sign-in",
             data: userData,
             success: function (data) {
                 var DataJSON = JSON.parse(data);
-                localStorage.setItem("token", DataJSON.token);
-            },
-            error: function (error) {
-                console.log(error);
+                if (DataJSON.success === false) {
+                    this.setState({ errors: DataJSON.msg })
+                    console.log(DataJSON.msg)
+                } else {
+                    localStorage.setItem("token", DataJSON.token);
+                    localStorage.setItem("device_id", DataJSON.device_id);
+                    console.log(DataJSON);
+                    window.location.reload();
+
+                }
+            }.bind(this),
+            error: (error) => {
+                console.log(JSON.parse(error));
             }
-        });
+        })
     }
 
     onSubmitRegistrationAttempt(e) {
@@ -82,7 +83,20 @@ class Landing extends Component {
             password: this.state.password,
             confirm_password: this.state.confirm_password
         }
-        this.props.registerUser(newUser, this.props.history);
+
+        $.ajax({
+            method: "POST",
+            url: "https://www.ambrosiasys.com/app-server/ios/patient-registration",
+            data: newUser,
+            success: (data) => {
+                var DataJSON = JSON.parse(data);
+                localStorage.setItem("token", DataJSON.token);
+            },
+            error: error => {
+                console.log(error);
+            }
+        });
+        // this.props.registerUser(newUser, this.props.history);
     }
     showLoginForm() {
         $(".se-pre-con").fadeIn("fast");
@@ -173,18 +187,24 @@ class Landing extends Component {
                                                     value={this.state.email}
                                                     onChange={this.onChange}
                                                     error={errors.email} />
+                                                <TextFieldGroup name="dob"
+                                                    type="text"
+                                                    placeholder="DOB (dd/mm/yy)"
+                                                    value={this.state.dob}
+                                                    onChange={this.onChange}
+                                                    error={errors.dob} />
+                                                <TextFieldGroup name="phone1"
+                                                    type="text"
+                                                    placeholder="Phone"
+                                                    value={this.state.phone1}
+                                                    onChange={this.onChange}
+                                                    error={errors.phone} />
                                                 <TextFieldGroup name="password"
                                                     type="password"
-                                                    placeholder="Create Password"
+                                                    placeholder="Password"
                                                     value={this.state.password}
                                                     onChange={this.onChange}
                                                     error={errors.password} />
-                                                <TextFieldGroup name="confirm_password"
-                                                    type="password"
-                                                    placeholder="Confirm Password"
-                                                    value={this.state.confirm_password}
-                                                    onChange={this.onChange}
-                                                    error={errors.confirm_password} />
                                                 <div className="col-xs-6 form-group pull-right">
                                                     <input type="submit" name="register-submit" id="register-submit" className="form-control btn btn-login" value="Submit" />
                                                 </div>
