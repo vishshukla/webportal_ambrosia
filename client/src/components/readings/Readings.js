@@ -11,11 +11,14 @@ import $ from 'jquery';
 
 class Readings extends Component {
     constructor(props) {
+        let d = new Date();
+        d.setDate(d.getDate() - 1);
+        let startTime = (new Date()).valueOf() - 24 * 60 * 60 * 1000;
         super(props);
         this.state = {
             data: {},
-          /*default to 24 hours*/  begin_date: "1534382150",
-            end_date: Date.now().toString(),
+          /*default to 24 hours*/  begin_date: startTime,
+            end_date: (new Date()).valueOf(),
         };
 
         // this.onChange = this.onChange.bind(this);
@@ -34,7 +37,7 @@ class Readings extends Component {
             data: {
                 "token": localStorage.getItem("token"),
                 "begin_date": this.state.begin_date,
-                "end_date": "1534465718",
+                "end_date": this.state.end_date,
             },
             success: function (data) {
                 var DataJSON = JSON.parse(data);
@@ -48,6 +51,44 @@ class Readings extends Component {
                 console.log(JSON.parse(error));
             }
         })
+    }
+
+    changeInterval(e) {
+        console.log()
+        let d = new Date();
+        let milliseconds = Math.floor((new Date()).getTime() / 1000);
+        this.setState({ end_time: milliseconds })
+        if (e.value === "24hrs") {
+            d.setDate(d.getDate() - 1);
+            this.setState({ begin_date: (new Date()).valueOf() - 24 * 60 * 60 * 1000 }) //Calculate 24 hours before
+        } else if (e.value === "7days") {
+            this.setState({ begin_date: (new Date()).valueOf() - 7 * 24 * 60 * 60 * 1000 })
+        } else {
+            d.setDate(d.getDate() - 30);
+            this.setState({ begin_date: (new Date()).valueOf() - 30 * 24 * 60 * 60 * 1000 })
+        }
+
+        $.ajax({
+            method: "POST",
+            url: "https://www.ambrosiasys.com/app-server/ios/get-patient-reading",
+            data: {
+                "token": localStorage.getItem("token"),
+                "begin_date": this.state.begin_date,
+                "end_date": this.state.end_date,
+            },
+            success: function (data) {
+                var DataJSON = JSON.parse(data);
+                if (DataJSON.success === false) {
+                    console.log(DataJSON)
+                } else {
+                    this.setState({ data: DataJSON })
+                }
+            }.bind(this),
+            error: (error) => {
+                console.log(JSON.parse(error));
+            }
+        })
+        // console.log(this.state.begin_date)
     }
     // comp
     // componentDidMount() {
@@ -107,8 +148,12 @@ class Readings extends Component {
         // console.log(rows)
         // let row = {}
         // }
+
         return (
             <div className="container">
+                <button value="24hrs" onClick={this.changeInterval.bind(this)}> Last 24 Hours</button>
+                <button value="7days" onClick={this.changeInterval.bind(this)} > Last 7 Days</button>
+                <button value="30days" onClick={this.changeInterval.bind(this)} > Last 30 Days</button>
                 < h1 className="text-center"> Readings Page</h1 >
                 <br />
                 <h3> {JSON.stringify(this.state.data)} </h3>

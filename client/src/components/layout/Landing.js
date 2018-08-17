@@ -64,7 +64,6 @@ class Landing extends Component {
                     localStorage.setItem("device_id", DataJSON.device_id);
                     console.log(DataJSON);
                     window.location.reload();
-
                 }
             }.bind(this),
             error: (error) => {
@@ -80,8 +79,10 @@ class Landing extends Component {
             first_name: this.state.first_name,
             last_name: this.state.last_name,
             email: this.state.email,
+            dob: this.state.dob,
             password: this.state.password,
-            confirm_password: this.state.confirm_password
+            phone1: this.state.phone1,
+            country: this.state.country
         }
 
         $.ajax({
@@ -90,7 +91,13 @@ class Landing extends Component {
             data: newUser,
             success: (data) => {
                 var DataJSON = JSON.parse(data);
-                localStorage.setItem("token", DataJSON.token);
+                if (DataJSON.success === false) {
+                    this.setState({ errors: DataJSON.msg })
+                    console.log(DataJSON.msg)
+                } else {
+                    console.log(DataJSON)
+                    window.location.reload();
+                }
             },
             error: error => {
                 console.log(error);
@@ -166,7 +173,7 @@ class Landing extends Component {
                                 <div className="panel-body">
                                     <div className="row">
                                         <div className="col-lg-12">
-                                            <form id="register-form" onSubmit={this.onSubmitRegistrationAttempt} rel="preload" action="#" style={{ display: "block" }}>
+                                            <form id="register-form" onSubmit={this.onSubmitRegistrationAttempt} action="#" style={{ display: "block" }}>
                                                 <img src={newlogo} rel="preload" alt="Ambrosia" className="center" />
                                                 <h2>REGISTER</h2>
                                                 <TextFieldGroup name="first_name"
